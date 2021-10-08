@@ -16,6 +16,8 @@
 #include <vcpkg/cmakevars.h>
 #include <vcpkg/commands.h>
 #include <vcpkg/commands.version.h>
+#include <vcpkg/compilation-config-factory.h>
+#include <vcpkg/compilation-config.h>
 #include <vcpkg/dependencies.h>
 #include <vcpkg/globalstate.h>
 #include <vcpkg/help.h>
@@ -740,6 +742,11 @@ namespace vcpkg::Build
             all_features.append(feature->name + ";");
         }
 
+        // TODO: consider promoting this construction to where the action is constructed?
+        auto const cfg = paths.get_compilation_config_factory().create_config(
+            args.bin2sth_cc, args.bin2sth_opt, args.bin2sth_obf, action.spec.triplet());
+        Debug::print("Detected bin2sth compilation configuration: ", cfg->to_string(), "\n");
+
         std::vector<CMakeVariable> variables{
             {"ALL_FEATURES", all_features},
             {"CURRENT_PORT_DIR", scfl.source_location},
@@ -750,6 +757,15 @@ namespace vcpkg::Build
             {"_VCPKG_DOWNLOAD_TOOL", to_string(action.build_options.download_tool)},
             {"_VCPKG_EDITABLE", Util::Enum::to_bool(action.build_options.editable) ? "1" : "0"},
             {"_VCPKG_NO_DOWNLOADS", !Util::Enum::to_bool(action.build_options.allow_downloads) ? "1" : "0"},
+            // HACK: stringify the whole configuration, including compiler, optimization, obfuscation and target arch
+            {"VCPKG_BIN2STH_CFG", cfg->to_string()},
+            // HACK: configure the compilers
+            {"VCPKG_BIN2STH_C_COMPILER", cfg->c_compiler_full_path()},
+            {"VCPKG_BIN2STH_CXX_COMPILER", cfg->cxx_compiler_full_path()},
+            // HACK: set build type as DEBUG hence no need to overwrite the default optimization configuration
+            // HACK: configure the optimization and obfuscation
+            {"VCPKG_C_FLAGS_DEBUG", cfg->make_c_flags()},
+            {"VCPKG_CXX_FLAGS_DEBUG", cfg->make_cxx_flags()},
         };
 
         for (auto cmake_arg : args.cmake_args)

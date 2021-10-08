@@ -11,6 +11,7 @@
 #include <vcpkg/binaryparagraph.h>
 #include <vcpkg/build.h>
 #include <vcpkg/commands.h>
+#include <vcpkg/compilation-config-factory.h>
 #include <vcpkg/configuration.h>
 #include <vcpkg/globalstate.h>
 #include <vcpkg/metrics.h>
@@ -420,6 +421,8 @@ namespace vcpkg
         vcpkg_dir_info = vcpkg_dir / "info";
         vcpkg_dir_updates = vcpkg_dir / "updates";
 
+        vcpkg_bin2sth_compiler_config_dir = root / "bin2sth" / "compilers";
+
         const auto versioning_tmp = buildtrees / "versioning_tmp";
         const auto versioning_output = buildtrees / "versioning";
 
@@ -439,6 +442,9 @@ namespace vcpkg
         }
         m_pimpl->triplets_dirs.emplace_back(triplets);
         m_pimpl->triplets_dirs.emplace_back(community_triplets);
+
+        m_compilation_config_factory =
+            std::make_unique<bin2sth::CompilationConfigFactory>(filesystem, vcpkg_bin2sth_compiler_config_dir);
     }
 
     Path VcpkgPaths::package_dir(const PackageSpec& spec) const { return this->packages / spec.dir(); }
@@ -1160,6 +1166,11 @@ namespace vcpkg
         {
             metrics->track_feature(flag.flag.to_string(), flag.enabled);
         }
+    }
+
+    const bin2sth::CompilationConfigFactory& VcpkgPaths::get_compilation_config_factory() const
+    {
+        return *m_compilation_config_factory;
     }
 
     VcpkgPaths::~VcpkgPaths() = default;

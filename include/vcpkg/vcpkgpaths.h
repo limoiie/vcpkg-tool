@@ -51,6 +51,11 @@ namespace vcpkg
         struct VcpkgPathsImpl;
     }
 
+    namespace bin2sth
+    {
+        struct CompilationConfigFactory;
+    }
+
     struct BinaryParagraph;
     struct Environment;
     struct PackageSpec;
@@ -114,6 +119,8 @@ namespace vcpkg
         Path vcpkg_dir_info;
         Path vcpkg_dir_updates;
 
+        Path vcpkg_bin2sth_compiler_config_dir;
+
         Path baselines_dot_git_dir;
         Path baselines_work_tree;
         Path baselines_output;
@@ -171,6 +178,8 @@ namespace vcpkg
         const Build::CompilerInfo& get_compiler_info(const Build::AbiInfo& abi_info) const;
         bool manifest_mode_enabled() const { return get_manifest().has_value(); }
 
+        const bin2sth::CompilationConfigFactory& get_compilation_config_factory() const;
+
         const FeatureFlagSettings& get_feature_flags() const;
         void track_feature_flag_metrics() const;
 
@@ -180,5 +189,6 @@ namespace vcpkg
 
     private:
         std::unique_ptr<details::VcpkgPathsImpl> m_pimpl;
+        std::unique_ptr<bin2sth::CompilationConfigFactory> m_compilation_config_factory;
     };
 }
