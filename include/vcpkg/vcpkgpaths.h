@@ -51,10 +51,16 @@ namespace vcpkg
         struct VcpkgPathsImpl;
     }
 
+    namespace bin2sth
+    {
+        struct CompilationFlagsFactory;
+    }
+
     struct BinaryParagraph;
     struct Environment;
     struct PackageSpec;
     struct Triplet;
+    struct CompilerInfo;
 
     struct VcpkgPaths
     {
@@ -86,6 +92,9 @@ namespace vcpkg
         StringView get_ports_cmake_hash() const;
         const Path get_triplet_file_path(Triplet triplet) const;
 
+        const std::vector<std::string> get_available_compiler_nicknames() const;
+        const std::map<std::string, CompilerInfo>& get_available_compilers() const;
+
         LockFile& get_installed_lockfile() const;
         void flush_lockfile() const;
 
@@ -113,6 +122,8 @@ namespace vcpkg
         Path vcpkg_dir_status_file;
         Path vcpkg_dir_info;
         Path vcpkg_dir_updates;
+
+        Path vcpkg_bin2sth_compiler_config_dir;
 
         Path baselines_dot_git_dir;
         Path baselines_work_tree;
@@ -170,6 +181,8 @@ namespace vcpkg
         const std::string& get_triplet_info(const Build::AbiInfo& abi_info) const;
         const Build::CompilerInfo& get_compiler_info(const Build::AbiInfo& abi_info) const;
         bool manifest_mode_enabled() const { return get_manifest().has_value(); }
+
+        bin2sth::CompilationFlagsFactory get_compilation_flags_factory() const;
 
         const FeatureFlagSettings& get_feature_flags() const;
         void track_feature_flag_metrics() const;

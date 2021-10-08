@@ -382,4 +382,65 @@ namespace vcpkg::Strings
         LinesStream stream;
         std::vector<std::string> lines;
     };
+
+    namespace regex
+    {
+        namespace
+        {
+            template<const StringView&... strings>
+            struct concat_trait
+                {
+                static constexpr auto __do_concat() noexcept
+                {
+                    constexpr auto LEN = (strings.size() + ... + 0);
+                    std::array<char, LEN + 1> res{};
+                    auto append = [i = 0, &res](const auto& string) mutable {
+                        for (auto c : string)
+                            res[i++] = c;
+                    };
+                    (append(strings), ...);
+                    res[LEN] = 0;
+                    return res;
+                }
+
+                static constexpr auto __concat = __do_concat();
+                static constexpr StringView value{__concat.data(), __concat.size() - 1};
+                };
+
+            template<const StringView&... strings>
+            static constexpr auto concat = concat_trait<strings...>::value;
+
+            static constexpr StringView CAPTURE_BEGIN = "(";
+            static constexpr StringView CAPTURE_END = ")";
+            static constexpr StringView GROUP_BEGIN = "(?:";
+            static constexpr StringView GROUP_END = ")";
+            static constexpr StringView LINE_BEGIN = "^";
+            static constexpr StringView LINE_END = "$";
+            static constexpr StringView OPTION = "?";
+            static constexpr StringView PLUS = "+";
+            static constexpr StringView TIMES = "*";
+        }
+
+        template<const StringView&... inner>
+        static constexpr auto cap = concat<CAPTURE_BEGIN, inner..., CAPTURE_END>;
+
+        template<const StringView&... inner>
+        static constexpr auto group = concat<GROUP_BEGIN, inner..., GROUP_END>;
+
+        template<const StringView&... inner>
+        static constexpr auto opt = concat<group<inner...>, OPTION>;
+
+        template<const StringView&... inner>
+        static constexpr auto exact = concat<LINE_BEGIN, inner..., LINE_END>;
+
+        template<const StringView&... inner>
+        static constexpr auto plus = concat<group<inner...>, PLUS>;
+
+        template<const StringView&... inner>
+        static constexpr auto times = concat<group<inner...>, TIMES>;
+
+        template<const StringView& sep, const StringView&... parts>
+        static constexpr auto join = concat<parts..., times<sep, parts...>>;
+    }
+
 }
