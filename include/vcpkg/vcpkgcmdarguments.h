@@ -106,6 +106,7 @@ namespace vcpkg
         bool binary_caching;
         bool versions;
         bool manifests;
+        bool bin2sth;
     };
 
     struct VcpkgCmdArguments
@@ -161,6 +162,13 @@ namespace vcpkg
         constexpr static StringLiteral CMAKE_SCRIPT_ARG = "x-cmake-args";
         std::vector<std::string> cmake_args;
 
+        constexpr static StringLiteral BIN2STH_CC_ARG = "compiler";
+        std::unique_ptr<std::string> bin2sth_cc;
+        constexpr static StringLiteral BIN2STH_OPT_ARG = "optimization";
+        std::unique_ptr<std::string> bin2sth_opt;
+        constexpr static StringLiteral BIN2STH_OBF_ARG = "obfuscation";
+        std::unique_ptr<std::string> bin2sth_obf;
+
         constexpr static StringLiteral DEBUG_SWITCH = "debug";
         Optional<bool> debug = nullopt;
         constexpr static StringLiteral SEND_METRICS_SWITCH = "sendmetrics";
@@ -202,6 +210,8 @@ namespace vcpkg
         Optional<bool> registries_feature = nullopt;
         constexpr static StringLiteral VERSIONS_FEATURE = "versions";
         Optional<bool> versions_feature = nullopt;
+        constexpr static StringLiteral BIN2STH_MODE_FEATURE = "bin2sth";
+        Optional<bool> bin2sth_mode = nullopt;
 
         constexpr static StringLiteral RECURSIVE_DATA_ENV = "X_VCPKG_RECURSIVE_DATA";
 
@@ -210,6 +220,7 @@ namespace vcpkg
         bool registries_enabled() const { return registries_feature.value_or(true); }
         bool versions_enabled() const { return versions_feature.value_or(true); }
         bool manifests_enabled() const { return manifest_mode.value_or(true); }
+        bool bin2sth_enabled() const { return bin2sth_mode.value_or(true); }
         FeatureFlagSettings feature_flag_settings() const
         {
             FeatureFlagSettings f;
@@ -218,6 +229,7 @@ namespace vcpkg
             f.registries = registries_enabled();
             f.versions = versions_enabled();
             f.manifests = manifests_enabled();
+            f.bin2sth = bin2sth_enabled();
             return f;
         }
 
