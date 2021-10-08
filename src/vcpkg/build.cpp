@@ -17,6 +17,8 @@
 #include <vcpkg/cmakevars.h>
 #include <vcpkg/commands.h>
 #include <vcpkg/commands.version.h>
+#include <vcpkg/compilation-flags-factory.h>
+#include <vcpkg/compile-triplet.h>
 #include <vcpkg/dependencies.h>
 #include <vcpkg/documentation.h>
 #include <vcpkg/globalstate.h>
@@ -763,6 +765,30 @@ namespace vcpkg::Build
         if (action.build_options.download_tool == DownloadTool::ARIA2)
         {
             variables.push_back({"ARIA2", paths.get_tool_exe(Tools::ARIA2)});
+        }
+
+        if (args.bin2sth_compile_triplet)
+        {
+            auto const compile_triplet =
+                bin2sth::CompileTriplet::from_canonical_name(*args.bin2sth_compile_triplet, action.spec.triplet());
+            auto p_compile_triplet = compile_triplet.get();
+            auto const flags = paths.get_compilation_flags_factory().interpret(*p_compile_triplet);
+            // HACK: in bin2sth mode, we only build release type, whose flags will be overwritten in corresponding
+            //  toolchain cmake files. To be more concrete, the 'release' build-type is actually configured as debug
+            //  and accepts different optimization options. The reason why not build debug type directly is that many
+            //  portfile.cmake files only install include/share or something like that when VCPKG_BUILD_TYPE=release.
+            //  Hence, to ensure the integrity of packages meanwhile preserve the compilation-configurability, we set
+            //  VCPKG_BUILD_TYPE=release (integrity), and overwrite its value in toolchain file (for the
+            //  configurability).
+            auto const compilation_variables = std::initializer_list<CMakeVariable>{
+                {"VCPKG_BUILD_TYPE", "release"},
+                {"VCPKG_C_FLAGS_RELEASE", flags.make_c_flags()},
+                {"VCPKG_CXX_FLAGS_RELEASE", flags.make_cxx_flags()},
+                {"VCPKG_BIN2STH_COMPILE_TRIPLET", p_compile_triplet->to_string()},
+                {"VCPKG_BIN2STH_C_COMPILER", flags.c_compiler_full_path()},
+                {"VCPKG_BIN2STH_CXX_COMPILER", flags.cxx_compiler_full_path()},
+            };
+            variables.insert(variables.end(), compilation_variables);
         }
 
         for (auto cmake_arg : args.cmake_args)
