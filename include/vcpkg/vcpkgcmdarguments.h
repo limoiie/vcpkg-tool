@@ -108,6 +108,7 @@ namespace vcpkg
         bool binary_caching;
         bool versions;
         bool manifests;
+        bool bin2sth;
     };
 
     struct VcpkgCmdArguments
@@ -125,13 +126,16 @@ namespace vcpkg
         constexpr static StringLiteral MANIFEST_ROOT_DIR_ARG = "x-manifest-root";
         std::unique_ptr<std::string> manifest_root_dir;
 
+        constexpr static StringLiteral BUILDTREES_ROOT_DIR_ENV = "VCPKG_BUILDTREES";
         constexpr static StringLiteral BUILDTREES_ROOT_DIR_ARG = "x-buildtrees-root";
         std::unique_ptr<std::string> buildtrees_root_dir;
         constexpr static StringLiteral DOWNLOADS_ROOT_DIR_ENV = "VCPKG_DOWNLOADS";
         constexpr static StringLiteral DOWNLOADS_ROOT_DIR_ARG = "downloads-root";
         std::unique_ptr<std::string> downloads_root_dir;
+        constexpr static StringLiteral INSTALL_ROOT_DIR_ENV = "VCPKG_INSTALL";
         constexpr static StringLiteral INSTALL_ROOT_DIR_ARG = "x-install-root";
         std::unique_ptr<std::string> install_root_dir;
+        constexpr static StringLiteral PACKAGES_ROOT_DIR_ENV = "VCPKG_PACKAGES";
         constexpr static StringLiteral PACKAGES_ROOT_DIR_ARG = "x-packages-root";
         std::unique_ptr<std::string> packages_root_dir;
         constexpr static StringLiteral SCRIPTS_ROOT_DIR_ARG = "x-scripts-root";
@@ -165,6 +169,9 @@ namespace vcpkg
 
         constexpr static StringLiteral EXACT_ABI_TOOLS_VERSIONS_SWITCH = "x-abi-tools-use-exact-versions";
         Optional<bool> exact_abi_tools_versions;
+
+        constexpr static StringLiteral BIN2STH_COMPILE_TRIPLET_ARG = "compile-triplet";
+        std::unique_ptr<std::string> bin2sth_compile_triplet;
 
         constexpr static StringLiteral DEBUG_SWITCH = "debug";
         Optional<bool> debug = nullopt;
@@ -207,6 +214,8 @@ namespace vcpkg
         Optional<bool> registries_feature = nullopt;
         constexpr static StringLiteral VERSIONS_FEATURE = "versions";
         Optional<bool> versions_feature = nullopt;
+        constexpr static StringLiteral BIN2STH_MODE_FEATURE = "bin2sth";
+        Optional<bool> bin2sth_mode = nullopt;
 
         constexpr static StringLiteral RECURSIVE_DATA_ENV = "X_VCPKG_RECURSIVE_DATA";
 
@@ -215,6 +224,7 @@ namespace vcpkg
         bool registries_enabled() const { return registries_feature.value_or(true); }
         bool versions_enabled() const { return versions_feature.value_or(true); }
         bool manifests_enabled() const { return manifest_mode.value_or(true); }
+        bool bin2sth_enabled() const { return bin2sth_mode.value_or(true); }
         FeatureFlagSettings feature_flag_settings() const
         {
             FeatureFlagSettings f;
@@ -223,6 +233,7 @@ namespace vcpkg
             f.registries = registries_enabled();
             f.versions = versions_enabled();
             f.manifests = manifests_enabled();
+            f.bin2sth = bin2sth_enabled();
             return f;
         }
 

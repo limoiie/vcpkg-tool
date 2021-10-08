@@ -53,6 +53,7 @@ namespace vcpkg
             {VcpkgCmdArguments::COMPILER_TRACKING_FEATURE, args.compiler_tracking},
             {VcpkgCmdArguments::REGISTRIES_FEATURE, args.registries_feature},
             {VcpkgCmdArguments::VERSIONS_FEATURE, args.versions_feature},
+            {VcpkgCmdArguments::BIN2STH_MODE_FEATURE, args.bin2sth_mode},
         };
 
         for (const auto& desc : flag_descriptions)
@@ -293,6 +294,7 @@ namespace vcpkg
                     {BUILTIN_PORTS_ROOT_DIR_ARG, &VcpkgCmdArguments::builtin_ports_root_dir},
                     {BUILTIN_REGISTRY_VERSIONS_DIR_ARG, &VcpkgCmdArguments::builtin_registry_versions_dir},
                     {ASSET_SOURCES_ARG, &VcpkgCmdArguments::asset_sources_template_arg},
+                    {BIN2STH_COMPILE_TRIPLET_ARG, &VcpkgCmdArguments::bin2sth_compile_triplet},
                 };
 
             constexpr static std::pair<StringView, std::vector<std::string> VcpkgCmdArguments::*>
@@ -714,6 +716,9 @@ namespace vcpkg
         from_env(get_env, HOST_TRIPLET_ENV, host_triplet);
         from_env(get_env, VCPKG_ROOT_DIR_ENV, vcpkg_root_dir);
         from_env(get_env, DOWNLOADS_ROOT_DIR_ENV, downloads_root_dir);
+        from_env(get_env, INSTALL_ROOT_DIR_ENV, install_root_dir);
+        from_env(get_env, PACKAGES_ROOT_DIR_ENV, packages_root_dir);
+        from_env(get_env, BUILDTREES_ROOT_DIR_ENV, buildtrees_root_dir);
         from_env(get_env, DEFAULT_VISUAL_STUDIO_PATH_ENV, default_visual_studio_path);
         from_env(get_env, ASSET_SOURCES_ENV, asset_sources_template_env);
 
@@ -777,6 +782,21 @@ namespace vcpkg
                 args.downloads_root_dir = std::make_unique<std::string>(entry->string().to_string());
             }
 
+            if (auto entry = obj.get(INSTALL_ROOT_DIR_ENV))
+            {
+                args.install_root_dir = std::make_unique<std::string>(entry->string().to_string());
+            }
+
+            if (auto entry = obj.get(PACKAGES_ROOT_DIR_ENV))
+            {
+                args.packages_root_dir = std::make_unique<std::string>(entry->string().to_string());
+            }
+
+            if (auto entry = obj.get(BUILDTREES_ROOT_DIR_ENV))
+            {
+                args.buildtrees_root_dir = std::make_unique<std::string>(entry->string().to_string());
+            }
+
             if (auto entry = obj.get(ASSET_SOURCES_ENV))
             {
                 args.asset_sources_template_env = entry->string().to_string();
@@ -804,6 +824,21 @@ namespace vcpkg
                 obj.insert(DOWNLOADS_ROOT_DIR_ENV, Json::Value::string(*args.downloads_root_dir.get()));
             }
 
+            if (args.install_root_dir)
+            {
+                obj.insert(INSTALL_ROOT_DIR_ENV, Json::Value::string(*args.install_root_dir.get()));
+            }
+
+            if (args.packages_root_dir)
+            {
+                obj.insert(PACKAGES_ROOT_DIR_ENV, Json::Value::string(*args.packages_root_dir.get()));
+            }
+
+            if (args.buildtrees_root_dir)
+            {
+                obj.insert(BUILDTREES_ROOT_DIR_ENV, Json::Value::string(*args.buildtrees_root_dir.get()));
+            }
+
             if (auto value = args.asset_sources_template())
             {
                 obj.insert(ASSET_SOURCES_ENV, Json::Value::string(value.value_or_exit(VCPKG_LINE_INFO)));
@@ -828,6 +863,7 @@ namespace vcpkg
         } possible_inconsistencies[] = {
             {BINARY_CACHING_FEATURE, BINARY_SOURCES_ARG, !binary_sources.empty() && !binary_caching.value_or(true)},
             {MANIFEST_MODE_FEATURE, MANIFEST_ROOT_DIR_ARG, manifest_root_dir && !manifest_mode.value_or(true)},
+            {BIN2STH_MODE_FEATURE, BIN2STH_COMPILE_TRIPLET_ARG, bin2sth_compile_triplet && !bin2sth_enabled()},
         };
         for (const auto& el : possible_inconsistencies)
         {
@@ -856,6 +892,7 @@ namespace vcpkg
             {COMPILER_TRACKING_FEATURE, compiler_tracking},
             {REGISTRIES_FEATURE, registries_feature},
             {VERSIONS_FEATURE, versions_feature},
+            {BIN2STH_MODE_FEATURE, bin2sth_mode},
         };
 
         for (const auto& flag : flags)
@@ -882,6 +919,7 @@ namespace vcpkg
             {COMPILER_TRACKING_FEATURE, compiler_tracking_enabled()},
             {REGISTRIES_FEATURE, registries_enabled()},
             {VERSIONS_FEATURE, versions_enabled()},
+            {BIN2STH_MODE_FEATURE, bin2sth_enabled()},
         };
 
         for (const auto& flag : flags)
@@ -999,10 +1037,13 @@ namespace vcpkg
     constexpr StringLiteral VcpkgCmdArguments::VCPKG_ROOT_DIR_ARG;
     constexpr StringLiteral VcpkgCmdArguments::MANIFEST_ROOT_DIR_ARG;
 
+    constexpr StringLiteral VcpkgCmdArguments::BUILDTREES_ROOT_DIR_ENV;
     constexpr StringLiteral VcpkgCmdArguments::BUILDTREES_ROOT_DIR_ARG;
     constexpr StringLiteral VcpkgCmdArguments::DOWNLOADS_ROOT_DIR_ENV;
     constexpr StringLiteral VcpkgCmdArguments::DOWNLOADS_ROOT_DIR_ARG;
+    constexpr StringLiteral VcpkgCmdArguments::INSTALL_ROOT_DIR_ENV;
     constexpr StringLiteral VcpkgCmdArguments::INSTALL_ROOT_DIR_ARG;
+    constexpr StringLiteral VcpkgCmdArguments::PACKAGES_ROOT_DIR_ENV;
     constexpr StringLiteral VcpkgCmdArguments::PACKAGES_ROOT_DIR_ARG;
     constexpr StringLiteral VcpkgCmdArguments::SCRIPTS_ROOT_DIR_ARG;
     constexpr StringLiteral VcpkgCmdArguments::BUILTIN_PORTS_ROOT_DIR_ARG;
@@ -1047,7 +1088,10 @@ namespace vcpkg
     constexpr StringLiteral VcpkgCmdArguments::REGISTRIES_FEATURE;
     constexpr StringLiteral VcpkgCmdArguments::RECURSIVE_DATA_ENV;
     constexpr StringLiteral VcpkgCmdArguments::VERSIONS_FEATURE;
+    constexpr StringLiteral VcpkgCmdArguments::BIN2STH_MODE_FEATURE;
 
     constexpr StringLiteral VcpkgCmdArguments::CMAKE_SCRIPT_ARG;
     constexpr StringLiteral VcpkgCmdArguments::EXACT_ABI_TOOLS_VERSIONS_SWITCH;
+
+    constexpr StringLiteral VcpkgCmdArguments::BIN2STH_COMPILE_TRIPLET_ARG;
 }
