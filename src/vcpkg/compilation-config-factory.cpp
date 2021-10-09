@@ -136,14 +136,14 @@ namespace vcpkg::bin2sth
                 }
             }
 
-            Checks::exit_with_message(VCPKG_LINE_INFO, std::string("Invalid optimization: ").append(opt));
+            Checks::exit_with_message(VCPKG_LINE_INFO, std::string("Error: Invalid optimization: ").append(opt));
         }
 
         ConfigFlags parse_obfuscation_flags(CompilerInfo const&, std::unique_ptr<std::string> const& obfuscation)
         {
-            constexpr auto DEFAULT_OBFUSCATION = "none";
+            constexpr auto DEFAULT_OBFUSCATION = "NONE";
             auto const obf = Strings::ascii_to_uppercase(obfuscation ? *obfuscation : DEFAULT_OBFUSCATION);
-            if (obf.empty()) return {obf, ""};
+            if (obf == DEFAULT_OBFUSCATION) return {obf, ""};
 
             std::string obfuscation_flags;
             if (obf.size() == 2 && std::isalpha(obf[0]) && std::isdigit(obf[1]))
@@ -157,7 +157,7 @@ namespace vcpkg::bin2sth
                 }
             }
 
-            Checks::exit_with_message(VCPKG_LINE_INFO, std::string("Invalid obfuscation: ").append(obf));
+            Checks::exit_with_message(VCPKG_LINE_INFO, std::string("Error: Invalid obfuscation: ").append(obf));
         }
     }
 
