@@ -1,4 +1,3 @@
-#include <vcpkg/compilation-config-factory.h>
 #include <vcpkg/compilation-config.h>
 
 namespace vcpkg::bin2sth

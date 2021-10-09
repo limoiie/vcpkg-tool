@@ -1,27 +1,15 @@
 #pragma once
 
-#include <vcpkg/triplet.h>
+#include <vcpkg/compilation-config.h>
+
+namespace vcpkg
+{
+    struct Triplet;
+}
 
 namespace vcpkg::bin2sth
 {
     struct CompilationConfig;
-    struct CompilerInfo
-    {
-        std::string name;
-        std::string version;
-        std::string c_full_path;
-        std::string cxx_full_path;
-
-        std::string nickname() const { return std::string(name).append("-").append(version); }
-    };
-
-    struct ConfigFlags
-    {
-        std::string name;
-        std::string flags;
-
-        std::string nickname() const { return name; }
-    };
 
     struct CompilationConfigFactory
     {
