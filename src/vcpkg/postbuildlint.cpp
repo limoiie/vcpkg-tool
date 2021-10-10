@@ -994,19 +994,24 @@ namespace vcpkg::PostBuildLint
             return error_count;
         }
 
-        error_count += check_for_files_in_include_directory(fs, build_info.policies, package_dir);
-        error_count += check_for_restricted_include_files(fs, build_info.policies, package_dir);
-        error_count += check_for_files_in_debug_include_directory(fs, package_dir);
-        error_count += check_for_files_in_debug_share_directory(fs, package_dir);
+        auto const is_dbg = pre_build_info.build_type == Build::ConfigurationType::DEBUG;
+        auto const is_rel = pre_build_info.build_type == Build::ConfigurationType::RELEASE;
+
+        auto const& ignore = LintStatus::SUCCESS;
+
+        error_count += is_dbg ? ignore : check_for_files_in_include_directory(fs, build_info.policies, package_dir);
+        error_count += is_dbg ? ignore : check_for_restricted_include_files(fs, build_info.policies, package_dir);
+        error_count += is_rel ? ignore : check_for_files_in_debug_include_directory(fs, package_dir);
+        error_count += is_rel ? ignore : check_for_files_in_debug_share_directory(fs, package_dir);
         error_count += check_for_vcpkg_port_config(fs, build_info.policies, package_dir, spec);
         error_count += check_folder_lib_cmake(fs, package_dir, spec);
         error_count += check_for_misplaced_cmake_files(fs, package_dir, spec);
-        error_count += check_folder_debug_lib_cmake(fs, package_dir, spec);
-        error_count += check_for_dlls_in_lib_dir(fs, package_dir);
-        error_count += check_for_dlls_in_lib_dir(fs, package_dir / "debug");
+        error_count += is_rel ? ignore : check_folder_debug_lib_cmake(fs, package_dir, spec);
+        error_count += is_dbg ? ignore : check_for_dlls_in_lib_dir(fs, package_dir);
+        error_count += is_rel ? ignore : check_for_dlls_in_lib_dir(fs, package_dir / "debug");
         error_count += check_for_copyright_file(fs, spec, paths);
-        error_count += check_for_exes(fs, package_dir);
-        error_count += check_for_exes(fs, package_dir / "debug");
+        error_count += is_dbg ? ignore : check_for_exes(fs, package_dir);
+        error_count += is_rel ? ignore : check_for_exes(fs, package_dir / "debug");
 
         const auto debug_lib_dir = package_dir / "debug" / "lib";
         const auto release_lib_dir = package_dir / "lib";
