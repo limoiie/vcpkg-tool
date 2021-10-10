@@ -11,8 +11,8 @@
 #include <vcpkg/binaryparagraph.h>
 #include <vcpkg/build.h>
 #include <vcpkg/commands.h>
-#include <vcpkg/compilation-config-factory.h>
-#include <vcpkg/compilation-config.h>
+#include <vcpkg/compilation-flags-factory.h>
+#include <vcpkg/compile-triplet.h>
 #include <vcpkg/configuration.h>
 #include <vcpkg/globalstate.h>
 #include <vcpkg/metrics.h>
@@ -444,8 +444,8 @@ namespace vcpkg
         m_pimpl->triplets_dirs.emplace_back(triplets);
         m_pimpl->triplets_dirs.emplace_back(community_triplets);
 
-        m_compilation_config_factory =
-            std::make_unique<bin2sth::CompilationConfigFactory>(filesystem, vcpkg_bin2sth_compiler_config_dir);
+        m_compile_triplet_factory =
+            std::make_unique<bin2sth::CompilationFlagsFactory>(filesystem, vcpkg_bin2sth_compiler_config_dir);
     }
 
     Path VcpkgPaths::package_dir(const PackageSpec& spec) const { return this->packages / spec.dir(); }
@@ -464,22 +464,22 @@ namespace vcpkg
 
     Path VcpkgPaths::installed_dir(const PackageSpec& spec) const
     {
-        return this->installed_dir(spec.compilation(), spec.triplet());
+        return this->installed_dir(spec.compile_triplet(), spec.triplet());
     }
 
-    Path VcpkgPaths::installed_dir(const Optional<bin2sth::CompilationConfig>& compilation_config) const
+    Path VcpkgPaths::installed_dir(const Optional<bin2sth::CompileTriplet>& compile_triplet) const
     {
-        if (auto const* p_compilation_config = compilation_config.get())
+        if (auto const* p_compile_triplet = compile_triplet.get())
         {
-            return this->m_installed / "bin2sth" / p_compilation_config->canonical_name();
+            return this->m_installed / "bin2sth" / p_compile_triplet->canonical_name();
         }
         return this->m_installed;
     }
 
-    Path VcpkgPaths::installed_dir(const Optional<bin2sth::CompilationConfig>& compilation_config,
+    Path VcpkgPaths::installed_dir(const Optional<bin2sth::CompileTriplet>& compile_triplet,
                                    const Triplet& triplet) const
     {
-        return this->installed_dir(compilation_config) / triplet.canonical_name();
+        return this->installed_dir(compile_triplet) / triplet.canonical_name();
     }
 
     bool VcpkgPaths::is_valid_triplet(Triplet t) const
@@ -1189,9 +1189,9 @@ namespace vcpkg
         }
     }
 
-    const bin2sth::CompilationConfigFactory& VcpkgPaths::get_compilation_config_factory() const
+    const bin2sth::CompilationFlagsFactory& VcpkgPaths::get_compilation_flags_factory() const
     {
-        return *m_compilation_config_factory;
+        return *m_compile_triplet_factory;
     }
 
     VcpkgPaths::~VcpkgPaths() = default;

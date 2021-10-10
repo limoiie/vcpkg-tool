@@ -2683,7 +2683,7 @@ namespace Catch {
 #if defined(CATCH_CONFIG_FAST_COMPILE) || defined(CATCH_CONFIG_DISABLE_EXCEPTIONS)
 
 ///////////////////////////////////////////////////////////////////////////////
-// Another way to speed-up compilation is to omit local try-catch for REQUIRE*
+// Another way to speed-up compile_triplet is to omit local try-catch for REQUIRE*
 // macros.
 #define INTERNAL_CATCH_TRY
 #define INTERNAL_CATCH_CATCH( capturer )
@@ -3263,7 +3263,7 @@ namespace Matchers {
 
 #if defined(__OBJC__)
         // Hack to fix Catch GH issue #1661. Could use id for generic Object support.
-        // use of const for Object pointers is very uncommon and under ARC it causes some kind of signature mismatch that breaks compilation
+        // use of const for Object pointers is very uncommon and under ARC it causes some kind of signature mismatch that breaks compile_triplet
         template<>
         struct MatcherMethod<NSString*> {
             virtual bool match( NSString* arg ) const = 0;

@@ -23,12 +23,18 @@ namespace vcpkg
         /// <summary>Find the StatusParagraph for given spec.</summary>
         /// <param name="spec">Package specification to find the status paragraph for</param>
         /// <returns>Iterator for found spec</returns>
-        const_iterator find(const PackageSpec& spec) const { return find(spec.name(), spec.triplet(), spec.compilation()); }
+        const_iterator find(const PackageSpec& spec) const
+        {
+            return find(spec.name(), spec.triplet(), spec.compile_triplet());
+        }
 
         /// <summary>Find the StatusParagraph for given feature spec.</summary>
         /// <param name="spec">Feature specification to find the status paragraph for</param>
         /// <returns>Iterator for found spec</returns>
-        const_iterator find(const FeatureSpec& spec) const { return find(spec.name(), spec.triplet(), spec.compilation(), spec.feature()); }
+        const_iterator find(const FeatureSpec& spec) const
+        {
+            return find(spec.name(), spec.triplet(), spec.compile_triplet(), spec.feature());
+        }
 
         /// <summary>Find a StatusParagraph by name, triplet and feature.</summary>
         /// <param name="name">Package name</param>
@@ -37,11 +43,11 @@ namespace vcpkg
         /// <returns>Iterator for found spec</returns>
         iterator find(const std::string& name,
                       Triplet triplet,
-                      const Optional<bin2sth::CompilationConfig>& compilation,
+                      const Optional<bin2sth::CompileTriplet>& compilation,
                       const std::string& feature = {});
         const_iterator find(const std::string& name,
                             Triplet triplet,
-                            const Optional<bin2sth::CompilationConfig>& compilation_config,
+                            const Optional<bin2sth::CompileTriplet>& compile_triplet,
                             const std::string& feature = {}) const;
 
         std::vector<std::unique_ptr<StatusParagraph>*> find_all(const std::string& name, Triplet triplet);

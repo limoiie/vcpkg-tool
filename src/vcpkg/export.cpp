@@ -366,12 +366,11 @@ namespace vcpkg::Export
         nullptr,
     };
 
-    static ExportArguments handle_export_command_arguments(
-        const VcpkgPaths& paths,
-        const VcpkgCmdArguments& args,
-        Triplet default_triplet,
-        Optional<bin2sth::CompilationConfig>&& default_compilation_config,
-        const StatusParagraphs& status_db)
+    static ExportArguments handle_export_command_arguments(const VcpkgPaths& paths,
+                                                           const VcpkgCmdArguments& args,
+                                                           Triplet default_triplet,
+                                                           Optional<bin2sth::CompileTriplet>&& default_compile_triplet,
+                                                           const StatusParagraphs& status_db)
     {
         ExportArguments ret;
 
@@ -412,7 +411,7 @@ namespace vcpkg::Export
             // input sanitization
             ret.specs = Util::fmap(args.command_arguments, [&](auto&& arg) {
                 return Input::check_and_get_package_spec(
-                    std::string(arg), default_triplet, default_compilation_config, COMMAND_STRUCTURE.example_text);
+                    std::string(arg), default_triplet, default_compile_triplet, COMMAND_STRUCTURE.example_text);
             });
         }
 
@@ -546,7 +545,7 @@ namespace vcpkg::Export
                 if (suffix.empty()) continue;
                 if (suffix.back() == '/') suffix.pop_back();
                 if (suffix == action.spec.triplet().to_string()) continue;
-                files.push_back(paths.installed_dir(action.spec.compilation()) / suffix);
+                files.push_back(paths.installed_dir(action.spec.compile_triplet()) / suffix);
             }
 
             Install::install_files_and_write_listfile(fs, paths.installed_dir(action.spec), files, dirs);
@@ -611,7 +610,7 @@ With a project open, go to Tools->NuGet Package Manager->Package Manager Console
     void perform_and_exit(const VcpkgCmdArguments& args,
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
-                          Optional<bin2sth::CompilationConfig>&& compilation_config)
+                          Optional<bin2sth::CompileTriplet>&& compile_triplet)
     {
         if (paths.manifest_mode_enabled())
         {
@@ -621,8 +620,8 @@ With a project open, go to Tools->NuGet Package Manager->Package Manager Console
                 "may use export in classic mode by running vcpkg outside of a manifest-based project.");
         }
         const StatusParagraphs status_db = database_load_check(paths);
-        const auto opts = handle_export_command_arguments(
-            paths, args, default_triplet, std::move(compilation_config), status_db);
+        const auto opts =
+            handle_export_command_arguments(paths, args, default_triplet, std::move(compile_triplet), status_db);
         for (auto&& spec : opts.specs)
             Input::check_triplet(spec.triplet(), paths);
 
@@ -701,8 +700,8 @@ With a project open, go to Tools->NuGet Package Manager->Package Manager Console
                                          const VcpkgPaths& paths,
                                          Triplet default_triplet,
                                          Triplet /*host_triplet*/,
-                                         Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
+                                         Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        Export::perform_and_exit(args, paths, default_triplet, std::move(default_compilation_config));
+        Export::perform_and_exit(args, paths, default_triplet, std::move(default_compile_triplet));
     }
 }

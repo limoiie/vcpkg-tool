@@ -49,7 +49,7 @@ namespace vcpkg::Remove
             std::vector<Path> dirs_touched;
             for (auto&& suffix : lines)
             {
-                auto target = paths.installed_dir(spec.compilation()) / suffix;
+                auto target = paths.installed_dir(spec.compile_triplet()) / suffix;
 
                 const auto status = fs.symlink_status(target, ec);
                 if (ec)
@@ -197,7 +197,7 @@ namespace vcpkg::Remove
     static void perform_and_exit(const VcpkgCmdArguments& args,
                                  const VcpkgPaths& paths,
                                  Triplet default_triplet,
-                                 Optional<bin2sth::CompilationConfig>&& default_compilation_config)
+                                 Optional<bin2sth::CompileTriplet>&& default_compile_triplet)
     {
         if (paths.manifest_mode_enabled())
         {
@@ -238,7 +238,7 @@ namespace vcpkg::Remove
             }
             specs = Util::fmap(args.command_arguments, [&](auto&& arg) {
                 return Input::check_and_get_package_spec(
-                    std::string(arg), default_triplet, default_compilation_config, COMMAND_STRUCTURE.example_text);
+                    std::string(arg), default_triplet, default_compile_triplet, COMMAND_STRUCTURE.example_text);
             });
 
             for (auto&& spec : specs)
@@ -318,8 +318,8 @@ namespace vcpkg::Remove
                                          const VcpkgPaths& paths,
                                          Triplet default_triplet,
                                          Triplet /*host_triplet*/,
-                                         Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
+                                         Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        Remove::perform_and_exit(args, paths, default_triplet, std::move(default_compilation_config));
+        Remove::perform_and_exit(args, paths, default_triplet, std::move(default_compile_triplet));
     }
 }

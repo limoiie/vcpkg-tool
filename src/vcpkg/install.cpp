@@ -8,7 +8,7 @@
 #include <vcpkg/build.h>
 #include <vcpkg/cmakevars.h>
 #include <vcpkg/commands.setinstalled.h>
-#include <vcpkg/compilation-config-factory.h>
+#include <vcpkg/compilation-flags-factory.h>
 #include <vcpkg/configuration.h>
 #include <vcpkg/dependencies.h>
 #include <vcpkg/globalstate.h>
@@ -207,9 +207,9 @@ namespace vcpkg::Install
     {
         const auto package_dir = paths.package_dir(bcf.core_paragraph.spec);
         Triplet triplet = bcf.core_paragraph.spec.triplet();
-        Optional<bin2sth::CompilationConfig> compilation_config = bcf.core_paragraph.spec.compilation();
+        Optional<bin2sth::CompileTriplet> compile_triplet = bcf.core_paragraph.spec.compile_triplet();
         const std::vector<StatusParagraphAndAssociatedFiles> pgh_and_files =
-            get_installed_files(paths, *status_db, compilation_config);
+            get_installed_files(paths, *status_db, compile_triplet);
 
         const SortedVector<std::string> package_files =
             build_list_of_package_files(paths.get_filesystem(), package_dir);
@@ -287,7 +287,7 @@ namespace vcpkg::Install
         }
 
         const InstallDir install_dir = InstallDir::from_destination_root(
-            paths.installed_dir(compilation_config), triplet.to_string(), paths.listfile_path(bcf.core_paragraph));
+            paths.installed_dir(compile_triplet), triplet.to_string(), paths.listfile_path(bcf.core_paragraph));
 
         install_package_and_write_listfile(paths, bcf.core_paragraph.spec, install_dir);
 
@@ -652,7 +652,7 @@ namespace vcpkg::Install
                 if (Strings::contains(suffix, "/share/") && Strings::ends_with(suffix, ".cmake"))
                 {
                     // CMake file is inside the share folder
-                    const auto path = paths.installed_dir(bpgh.spec.compilation()) / suffix;
+                    const auto path = paths.installed_dir(bpgh.spec.compile_triplet()) / suffix;
                     const auto contents = fs.read_contents(path, ec);
                     const auto find_package_name = Path(path.parent_path()).filename().to_string();
                     if (!ec)
@@ -777,7 +777,7 @@ namespace vcpkg::Install
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
                           Triplet host_triplet,
-                          Optional<bin2sth::CompilationConfig>&& default_compilation_config)
+                          Optional<bin2sth::CompileTriplet>&& default_compile_triplet)
     {
         // input sanitization
         const ParsedArguments options =
@@ -989,7 +989,7 @@ namespace vcpkg::Install
 
         const std::vector<FullPackageSpec> specs = Util::fmap(args.command_arguments, [&](auto&& arg) {
             return Input::check_and_get_full_package_spec(
-                std::string(arg), default_triplet, default_compilation_config, COMMAND_STRUCTURE.example_text);
+                std::string(arg), default_triplet, default_compile_triplet, COMMAND_STRUCTURE.example_text);
         });
 
         for (auto&& spec : specs)
@@ -1124,9 +1124,9 @@ namespace vcpkg::Install
                                           const VcpkgPaths& paths,
                                           Triplet default_triplet,
                                           Triplet host_triplet,
-                                          Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
+                                          Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        Install::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compilation_config));
+        Install::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 
     SpecSummary::SpecSummary(const PackageSpec& spec, const Dependencies::InstallPlanAction* action)

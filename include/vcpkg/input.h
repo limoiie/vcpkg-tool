@@ -6,11 +6,11 @@ namespace vcpkg::Input
 {
     PackageSpec check_and_get_package_spec(std::string&& spec_string,
                                            Triplet default_triplet,
-                                           Optional<bin2sth::CompilationConfig> const& default_compilation_config,
+                                           Optional<bin2sth::CompileTriplet> const& default_compile_triplet,
                                            CStringView example_text);
     FullPackageSpec check_and_get_full_package_spec(std::string&& spec_string,
                                                     Triplet default_triplet,
-                                                    Optional<bin2sth::CompilationConfig> const& compilation_config,
+                                                    Optional<bin2sth::CompileTriplet> const& compile_triplet,
                                                     CStringView example_text);
 
     void check_triplet(Triplet t, const VcpkgPaths& paths);

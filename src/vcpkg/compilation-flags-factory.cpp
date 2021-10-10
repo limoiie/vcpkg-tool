@@ -2,11 +2,9 @@
 #include <vcpkg/base/jsonreader.h>
 #include <vcpkg/base/util.h>
 
-#include <vcpkg/compilation-config-factory.h>
-#include <vcpkg/compilation-config.h>
+#include <vcpkg/compilation-flags-factory.h>
+#include <vcpkg/compile-triplet.h>
 #include <vcpkg/triplet.h>
-#include <vcpkg/vcpkgcmdarguments.h>
-#include <vcpkg/vcpkgpaths.h>
 
 namespace vcpkg::bin2sth
 {
@@ -19,7 +17,7 @@ namespace vcpkg::bin2sth
         static ConfigFlags parse_obfuscation_flags(CompilerInfo const& compiler_info, std::string const& obfuscation);
     }
 
-    CompilationConfigFactory::CompilationConfigFactory(Filesystem& filesystem, Path const& compiler_config_dir)
+    CompilationFlagsFactory::CompilationFlagsFactory(Filesystem& filesystem, Path const& compiler_config_dir)
     {
         for (auto const& compiler_config_path :
              filesystem.get_regular_files_recursive(compiler_config_dir, VCPKG_LINE_INFO))
@@ -49,7 +47,7 @@ namespace vcpkg::bin2sth
         return std::string(m_optimization.flags).append(" ").append(m_obfuscation.flags);
     }
 
-    CompilationFlags CompilationConfigFactory::make_flags_from_config(const CompilationConfig& config) const
+    CompilationFlags CompilationFlagsFactory::interpret(const CompileTriplet& config) const
     {
         auto const compiler_info_itr = m_compilers.find(config.compiler_tag);
 
@@ -190,19 +188,6 @@ namespace vcpkg::bin2sth
         hash = hash * 17 + fn_str_hash(name);
         hash = hash * 17 + fn_str_hash(flags);
         return hash;
-    }
-
-    Optional<CompilationConfig> default_compilation_config(vcpkg::VcpkgCmdArguments const& args,
-                                                           vcpkg::Triplet default_triplet)
-    {
-        Optional<CompilationConfig> default_compilation = nullopt;
-        if (args.bin2sth_enabled())
-        {
-            auto const compile_triplet = args.bin2sth_compile_triplet ? *args.bin2sth_compile_triplet : "";
-            default_compilation =
-                CompilationConfig::from_canonical_name(compile_triplet, std::move(default_triplet));
-        }
-        return default_compilation;
     }
 
 }

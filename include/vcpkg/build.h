@@ -74,12 +74,12 @@ namespace vcpkg::Build
                     const VcpkgPaths& paths,
                     Triplet default_triplet,
                     Triplet host_triplet,
-                    Optional<bin2sth::CompilationConfig>&& default_compilation_config);
+                    Optional<bin2sth::CompileTriplet>&& default_compile_triplet);
         void perform_and_exit(const VcpkgCmdArguments& args,
                               const VcpkgPaths& paths,
                               Triplet default_triplet,
                               Triplet host_triplet,
-                              Optional<bin2sth::CompilationConfig>&& default_compilation_config);
+                              Optional<bin2sth::CompileTriplet>&& default_compile_triplet);
     }
 
     enum class UseHeadVersion
@@ -217,14 +217,14 @@ namespace vcpkg::Build
     {
         PreBuildInfo(const VcpkgPaths& paths,
                      Triplet triplet,
-                     const Optional<bin2sth::CompilationConfig>& compilation_config,
+                     const Optional<bin2sth::CompileTriplet>& compile_triplet,
                      const std::unordered_map<std::string, std::string>& cmakevars);
 
         PreBuildInfo(const PreBuildInfo&) = delete;
         PreBuildInfo& operator=(const PreBuildInfo&) = delete;
 
         Triplet triplet;
-        Optional<bin2sth::CompilationConfig> compilation_config;
+        Optional<bin2sth::CompileTriplet> compile_triplet;
         bool load_vcvars_env = false;
         bool disable_compiler_tracking = false;
         std::string target_architecture;
@@ -401,6 +401,6 @@ namespace vcpkg::Build
                                       const VcpkgPaths& paths,
                                       Triplet default_triplet,
                                       Triplet host_triplet,
-                                      Optional<bin2sth::CompilationConfig>&& default_compilation_config) const override;
+                                      Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const override;
     };
 }

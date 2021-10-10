@@ -9,7 +9,7 @@ namespace vcpkg::Commands::Env
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
                           Triplet host_triplet,
-                          Optional<bin2sth::CompilationConfig>&& compilation_config);
+                          Optional<bin2sth::CompileTriplet>&& compile_triplet);
 
     struct EnvCommand : TripletCommand
     {
@@ -17,6 +17,6 @@ namespace vcpkg::Commands::Env
                                       const VcpkgPaths& paths,
                                       Triplet default_triplet,
                                       Triplet host_triplet,
-                                      Optional<bin2sth::CompilationConfig>&& default_compilation_config) const override;
+                                      Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const override;
     };
 }

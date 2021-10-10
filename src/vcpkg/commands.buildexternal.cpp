@@ -21,7 +21,7 @@ namespace vcpkg::Commands::BuildExternal
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
                           Triplet host_triplet,
-                          Optional<bin2sth::CompilationConfig>&& default_compilation_config)
+                          Optional<bin2sth::CompileTriplet>&& default_compile_triplet)
     {
         const ParsedArguments options = args.parse_arguments(COMMAND_STRUCTURE);
 
@@ -29,7 +29,7 @@ namespace vcpkg::Commands::BuildExternal
 
         const FullPackageSpec spec = Input::check_and_get_full_package_spec(std::string(args.command_arguments.at(0)),
                                                                             default_triplet,
-                                                                            default_compilation_config,
+                                                                            default_compile_triplet,
                                                                             COMMAND_STRUCTURE.example_text);
         Input::check_triplet(spec.package_spec.triplet(), paths);
 
@@ -56,9 +56,8 @@ namespace vcpkg::Commands::BuildExternal
                                                 const VcpkgPaths& paths,
                                                 Triplet default_triplet,
                                                 Triplet host_triplet,
-                                                Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
+                                                Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        BuildExternal::perform_and_exit(
-            args, paths, default_triplet, host_triplet, std::move(default_compilation_config));
+        BuildExternal::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 }

@@ -198,7 +198,7 @@ namespace vcpkg
     std::vector<StatusParagraphAndAssociatedFiles> get_installed_files(
         const VcpkgPaths& paths,
         const StatusParagraphs& status_db,
-        const Optional<bin2sth::CompilationConfig>& compilation_config)
+        const Optional<bin2sth::CompileTriplet>& compile_triplet)
     {
         auto& fs = paths.get_filesystem();
 
@@ -207,7 +207,7 @@ namespace vcpkg
         for (const std::unique_ptr<StatusParagraph>& pgh : status_db)
         {
             if (!pgh->is_installed() || pgh->package.is_feature() ||
-                pgh->package.spec.compilation() != compilation_config)
+                pgh->package.spec.compile_triplet() != compile_triplet)
             {
                 continue;
             }

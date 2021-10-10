@@ -37,7 +37,7 @@ namespace vcpkg::Commands::Env
                           const VcpkgPaths& paths,
                           Triplet triplet,
                           Triplet /*host_triplet*/,
-                          Optional<bin2sth::CompilationConfig>&& compilation_config)
+                          Optional<bin2sth::CompileTriplet>&& compile_triplet)
     {
         const auto& fs = paths.get_filesystem();
 
@@ -50,7 +50,7 @@ namespace vcpkg::Commands::Env
         var_provider.load_generic_triplet_vars(triplet);
 
         auto cmake_vars = var_provider.get_generic_triplet_vars(triplet).value_or_exit(VCPKG_LINE_INFO);
-        const Build::PreBuildInfo pre_build_info(paths, triplet, compilation_config, cmake_vars);
+        const Build::PreBuildInfo pre_build_info(paths, triplet, compile_triplet, cmake_vars);
         const Toolset& toolset = paths.get_toolset(pre_build_info);
         auto build_env_cmd = Build::make_build_env_cmd(pre_build_info, toolset, paths);
 
@@ -61,7 +61,7 @@ namespace vcpkg::Commands::Env
         const bool add_tools = Util::Sets::contains(options.switches, OPTION_TOOLS);
         const bool add_python = Util::Sets::contains(options.switches, OPTION_PYTHON);
 
-        const auto installed = paths.installed_dir(compilation_config, triplet);
+        const auto installed = paths.installed_dir(compile_triplet, triplet);
         std::vector<std::string> path_vars;
         if (add_bin) path_vars.push_back((installed / "bin").native());
         if (add_debug_bin) path_vars.push_back((installed / "debug" / "bin").native());
@@ -123,8 +123,8 @@ namespace vcpkg::Commands::Env
                                       const VcpkgPaths& paths,
                                       Triplet default_triplet,
                                       Triplet host_triplet,
-                                      Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
+                                      Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        Env::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compilation_config));
+        Env::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 }

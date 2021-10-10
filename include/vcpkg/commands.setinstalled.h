@@ -20,7 +20,7 @@ namespace vcpkg::Commands::SetInstalled
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
                           Triplet host_triplet,
-                          Optional<bin2sth::CompilationConfig>&& default_compilation_config);
+                          Optional<bin2sth::CompileTriplet>&& default_compile_triplet);
 
     struct SetInstalledCommand : TripletCommand
     {
@@ -28,6 +28,6 @@ namespace vcpkg::Commands::SetInstalled
                                       const VcpkgPaths& paths,
                                       Triplet default_triplet,
                                       Triplet host_triplet,
-                                      Optional<bin2sth::CompilationConfig>&& default_compilation_config) const override;
+                                      Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const override;
     };
 }

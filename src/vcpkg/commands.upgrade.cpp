@@ -43,7 +43,7 @@ namespace vcpkg::Commands::Upgrade
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
                           Triplet host_triplet,
-                          Optional<bin2sth::CompilationConfig>&& default_compilation_config)
+                          Optional<bin2sth::CompileTriplet>&& default_compile_triplet)
     {
         if (paths.manifest_mode_enabled())
         {
@@ -71,7 +71,7 @@ namespace vcpkg::Commands::Upgrade
         // input sanitization
         const std::vector<PackageSpec> specs = Util::fmap(args.command_arguments, [&](auto&& arg) {
             return Input::check_and_get_package_spec(
-                std::string(arg), default_triplet, default_compilation_config, COMMAND_STRUCTURE.example_text);
+                std::string(arg), default_triplet, default_compile_triplet, COMMAND_STRUCTURE.example_text);
         });
 
         for (auto&& spec : specs)
@@ -223,8 +223,8 @@ namespace vcpkg::Commands::Upgrade
                                           const VcpkgPaths& paths,
                                           Triplet default_triplet,
                                           Triplet host_triplet,
-                                          Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
+                                          Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        Upgrade::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compilation_config));
+        Upgrade::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 }

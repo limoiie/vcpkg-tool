@@ -53,8 +53,8 @@ namespace vcpkg
 
     namespace bin2sth
     {
-        struct CompilationConfigFactory;
-        struct CompilationConfig;
+        struct CompilationFlagsFactory;
+        struct CompileTriplet;
     }
 
     struct BinaryParagraph;
@@ -87,9 +87,8 @@ namespace vcpkg
 
         Path const& installed_root() const { return m_installed; }
         Path installed_dir(const PackageSpec& spec) const;
-        Path installed_dir(const Optional<bin2sth::CompilationConfig>& compilation_config) const;
-        Path installed_dir(const Optional<bin2sth::CompilationConfig>& compilation_config,
-                           const Triplet& triplet) const;
+        Path installed_dir(const Optional<bin2sth::CompileTriplet>& compile_triplet) const;
+        Path installed_dir(const Optional<bin2sth::CompileTriplet>& compile_triplet, const Triplet& triplet) const;
 
         bool is_valid_triplet(Triplet t) const;
         const std::vector<std::string> get_available_triplets_names() const;
@@ -185,7 +184,7 @@ namespace vcpkg
         const Build::CompilerInfo& get_compiler_info(const Build::AbiInfo& abi_info) const;
         bool manifest_mode_enabled() const { return get_manifest().has_value(); }
 
-        const bin2sth::CompilationConfigFactory& get_compilation_config_factory() const;
+        const bin2sth::CompilationFlagsFactory& get_compilation_flags_factory() const;
 
         const FeatureFlagSettings& get_feature_flags() const;
         void track_feature_flag_metrics() const;
@@ -197,6 +196,6 @@ namespace vcpkg
     private:
         Path m_installed;
         std::unique_ptr<details::VcpkgPathsImpl> m_pimpl;
-        std::unique_ptr<bin2sth::CompilationConfigFactory> m_compilation_config_factory;
+        std::unique_ptr<bin2sth::CompilationFlagsFactory> m_compile_triplet_factory;
     };
 }

@@ -142,14 +142,14 @@ namespace vcpkg::Commands::SetInstalled
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
                           Triplet host_triplet,
-                          Optional<bin2sth::CompilationConfig>&& default_compilation_config)
+                          Optional<bin2sth::CompileTriplet>&& default_compile_triplet)
     {
         // input sanitization
         const ParsedArguments options = args.parse_arguments(COMMAND_STRUCTURE);
 
         const std::vector<FullPackageSpec> specs = Util::fmap(args.command_arguments, [&](auto&& arg) {
             return Input::check_and_get_full_package_spec(
-                std::string(arg), default_triplet, default_compilation_config, COMMAND_STRUCTURE.example_text);
+                std::string(arg), default_triplet, default_compile_triplet, COMMAND_STRUCTURE.example_text);
         });
 
         for (auto&& spec : specs)
@@ -197,9 +197,8 @@ namespace vcpkg::Commands::SetInstalled
                                                const VcpkgPaths& paths,
                                                Triplet default_triplet,
                                                Triplet host_triplet,
-                                               Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
+                                               Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        SetInstalled::perform_and_exit(
-            args, paths, default_triplet, host_triplet, std::move(default_compilation_config));
+        SetInstalled::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 }

@@ -5,7 +5,7 @@
 
 #include <vcpkg/base/files.h>
 
-#include <vcpkg/compilation-config.h>
+#include <vcpkg/compile-triplet.h>
 #include <vcpkg/triplet.h>
 
 namespace vcpkg::Commands
@@ -34,7 +34,7 @@ namespace vcpkg::Commands
                                       const VcpkgPaths& paths,
                                       Triplet default_triplet,
                                       Triplet host_triplet,
-                                      Optional<bin2sth::CompilationConfig>&& default_compilation_config) const = 0;
+                                      Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const = 0;
         virtual ~TripletCommand() = default;
     };
 }

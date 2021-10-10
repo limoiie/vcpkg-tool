@@ -8,13 +8,13 @@ namespace vcpkg
     Command make_cmake_cmd(const VcpkgPaths& paths,
                            const Path& cmake_script,
                            std::vector<CMakeVariable>&& pass_variables,
-                           Optional<bin2sth::CompilationConfig> const& compilation_config)
+                           Optional<bin2sth::CompileTriplet> const& compile_triplet)
     {
         auto local_variables = std::move(pass_variables);
         local_variables.emplace_back("VCPKG_ROOT_DIR", paths.root);
         local_variables.emplace_back("PACKAGES_DIR", paths.packages);
         local_variables.emplace_back("BUILDTREES_DIR", paths.buildtrees);
-        local_variables.emplace_back("_VCPKG_INSTALLED_DIR", paths.installed_dir(compilation_config));
+        local_variables.emplace_back("_VCPKG_INSTALLED_DIR", paths.installed_dir(compile_triplet));
         local_variables.emplace_back("DOWNLOADS", paths.downloads);
         local_variables.emplace_back("VCPKG_MANIFEST_INSTALL", "OFF");
         return make_basic_cmake_cmd(paths.get_tool_exe(Tools::CMAKE), cmake_script, local_variables);

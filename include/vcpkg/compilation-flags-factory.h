@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vcpkg/compilation-config.h>
+#include <vcpkg/compile-triplet.h>
 
 #include <map>
 
@@ -13,7 +13,7 @@ namespace vcpkg
 
 namespace vcpkg::bin2sth
 {
-    struct CompilationConfig;
+    struct CompileTriplet;
 
     struct CompilerInfo
     {
@@ -50,18 +50,16 @@ namespace vcpkg::bin2sth
         ConfigFlags m_obfuscation;
     };
 
-    struct CompilationConfigFactory
+    struct CompilationFlagsFactory
     {
-        CompilationConfigFactory(Filesystem& filesystem, Path const& compiler_config_dir);
+        CompilationFlagsFactory(Filesystem& filesystem, Path const& compiler_config_dir);
 
-        CompilationFlags make_flags_from_config(CompilationConfig const& config) const;
+        CompilationFlags interpret(CompileTriplet const& config) const;
 
     private:
         std::map<std::string, CompilerInfo> m_compilers;
     };
 
-    Optional<bin2sth::CompilationConfig> default_compilation_config(VcpkgCmdArguments const& args,
-                                                                    Triplet default_triplet);
 }
 
 namespace std
