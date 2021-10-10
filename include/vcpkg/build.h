@@ -215,12 +215,14 @@ namespace vcpkg::Build
     {
         PreBuildInfo(const VcpkgPaths& paths,
                      Triplet triplet,
+                     const Optional<bin2sth::CompilationConfig>& compilation_config,
                      const std::unordered_map<std::string, std::string>& cmakevars);
 
         PreBuildInfo(const PreBuildInfo&) = delete;
         PreBuildInfo& operator=(const PreBuildInfo&) = delete;
 
         Triplet triplet;
+        Optional<bin2sth::CompilationConfig> compilation_config;
         bool load_vcvars_env = false;
         bool disable_compiler_tracking = false;
         std::string target_architecture;
