@@ -2,42 +2,66 @@
 
 namespace vcpkg::bin2sth
 {
-    CompilationConfig::CompilationConfig(CompilerInfo const& compiler_info,
-                                         ConfigFlags optimization,
-                                         ConfigFlags obfuscation,
+    static std::string deref_or(std::unique_ptr<std::string> const& p, StringLiteral default_)
+    {
+        return p && p->size() ? *p : default_;
+    }
+
+    CompilationConfig::CompilationConfig(std::string compiler_tag,
+                                         std::string optimization_tag,
+                                         std::string obfuscation_tag,
                                          Triplet triplet)
-        : compiler_info(compiler_info)
-        , optimization(std::move(optimization))
-        , obfuscation(std::move(obfuscation))
+        : compiler_tag(std::move(compiler_tag))
+        , optimization_tag(std::move(optimization_tag))
+        , obfuscation_tag(std::move(obfuscation_tag))
+        , triplet(std::move(triplet))
+    {
+    }
+
+    CompilationConfig::CompilationConfig(std::unique_ptr<std::string> const& compiler_tag,
+                                         std::unique_ptr<std::string> const& optimization_tag,
+                                         std::unique_ptr<std::string> const& obfuscation_tag,
+                                         Triplet triplet)
+        : compiler_tag(deref_or(compiler_tag, DEFAULT_COMPILER_TAG))
+        , optimization_tag(deref_or(optimization_tag, DEFAULT_OPTIMIZATION_TAG))
+        , obfuscation_tag(deref_or(obfuscation_tag, DEFAULT_OBFUSCATION_TAG))
         , triplet(triplet)
     {
-        // TODO: verify if the compiler supports obfuscation or not
-        // TODO: verify if the compiler is good with the target architecture
     }
 
-    std::string CompilationConfig::to_string() const
+    Optional<CompilationConfig> CompilationConfig::from_canonical_name(const std::string& canonical_name,
+                                                                       Triplet triplet)
     {
-        return std::string(triplet.to_string())
-            .append("_")
-            .append(compiler_info.nickname())
-            .append("_")
-            .append(optimization.nickname())
-            .append("_")
-            .append(obfuscation.nickname());
+        if (canonical_name.empty()) return nullopt;
+        auto parts = Strings::split(canonical_name, '_');
+        Checks::check_exit(VCPKG_LINE_INFO, parts.size() == 3);
+        return CompilationConfig{std::move(parts[0]), std::move(parts[1]), std::move(parts[2]), std::move(triplet)};
     }
 
-    void CompilationConfig::to_string(std::string& str) const { str.assign(to_string()); }
+    std::string CompilationConfig::to_string() const { return canonical_name(); }
 
-    std::string CompilationConfig::c_compiler_full_path() const { return compiler_info.c_full_path; }
-    std::string CompilationConfig::cxx_compiler_full_path() const { return compiler_info.cxx_full_path; }
+    void CompilationConfig::to_string(std::string& str) const { str.append(to_string()); }
 
-    std::string CompilationConfig::make_cxx_flags() const
+    std::string CompilationConfig::canonical_name() const
     {
-        return std::string(optimization.flags).append(" ").append(obfuscation.flags);
+        return Strings::format("%s_%s_%s", compiler_tag, optimization_tag, obfuscation_tag);
     }
 
-    std::string CompilationConfig::make_c_flags() const
+    void CompilationConfig::with_triplet(Triplet new_triplet) { this->triplet = std::move(new_triplet); }
+
+    size_t CompilationConfig::hash_code() const
     {
-        return std::string(optimization.flags).append(" ").append(obfuscation.flags);
+        auto const fn_str_hash = std::hash<std::string>();
+        size_t hash = 17;
+        hash = hash * 31 + fn_str_hash(compiler_tag);
+        hash = hash * 31 + fn_str_hash(optimization_tag);
+        hash = hash * 31 + fn_str_hash(obfuscation_tag);
+        hash = hash * 31 + std::hash<Triplet>()(triplet);
+        return hash;
+    }
+
+    bool operator==(CompilationConfig const& left, CompilationConfig const& right)
+    {
+        return left.hash_code() == right.hash_code();
     }
 }

@@ -759,16 +759,25 @@ namespace vcpkg::Build
             {"_VCPKG_DOWNLOAD_TOOL", to_string(action.build_options.download_tool)},
             {"_VCPKG_EDITABLE", Util::Enum::to_bool(action.build_options.editable) ? "1" : "0"},
             {"_VCPKG_NO_DOWNLOADS", !Util::Enum::to_bool(action.build_options.allow_downloads) ? "1" : "0"},
-            // HACK: stringify the whole configuration, including compiler, optimization, obfuscation and target arch
-            {"VCPKG_BIN2STH_CFG", cfg->to_string()},
-            // HACK: configure the compilers
-            {"VCPKG_BIN2STH_C_COMPILER", cfg->c_compiler_full_path()},
-            {"VCPKG_BIN2STH_CXX_COMPILER", cfg->cxx_compiler_full_path()},
-            // HACK: set build type as DEBUG hence no need to overwrite the default optimization configuration
-            // HACK: configure the optimization and obfuscation
-            {"VCPKG_C_FLAGS_DEBUG", cfg->make_c_flags()},
-            {"VCPKG_CXX_FLAGS_DEBUG", cfg->make_cxx_flags()},
         };
+
+        if (auto const* p_compilation_config = action.spec.compilation().get())
+        {
+            auto const flags = paths.get_compilation_config_factory().make_flags_from_config(*p_compilation_config);
+            variables.insert(variables.end(),
+                             {
+                                 // HACK: stringify the whole configuration, including compiler, optimization,
+                                 // obfuscation and triplet
+                                 {"VCPKG_BIN2STH_COMPILATION_CFG", p_compilation_config->to_string()},
+                                 // HACK: configure the compilers
+                                 {"VCPKG_BIN2STH_C_COMPILER", flags.c_compiler_full_path()},
+                                 {"VCPKG_BIN2STH_CXX_COMPILER", flags.cxx_compiler_full_path()},
+                                 // HACK: set build type as DEBUG hence no need to overwrite the default optimization
+                                 // configuration HACK: configure the optimization and obfuscation
+                                 {"VCPKG_C_FLAGS_DEBUG", flags.make_c_flags()},
+                                 {"VCPKG_CXX_FLAGS_DEBUG", flags.make_cxx_flags()},
+                             });
+        }
 
         for (auto cmake_arg : args.cmake_args)
         {

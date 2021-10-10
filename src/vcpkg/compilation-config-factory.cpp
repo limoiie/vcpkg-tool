@@ -5,6 +5,8 @@
 #include <vcpkg/compilation-config-factory.h>
 #include <vcpkg/compilation-config.h>
 #include <vcpkg/triplet.h>
+#include <vcpkg/vcpkgcmdarguments.h>
+#include <vcpkg/vcpkgpaths.h>
 
 namespace vcpkg::bin2sth
 {
@@ -12,11 +14,9 @@ namespace vcpkg::bin2sth
     {
         static CompilerInfo load_compiler_info(Filesystem& filesystem, Path const& compiler_info_path);
 
-        static ConfigFlags parse_optimization_flags(CompilerInfo const& compiler_info,
-                                                    std::unique_ptr<std::string> const& optimization);
+        static ConfigFlags parse_optimization_flags(CompilerInfo const& compiler_info, std::string const& optimization);
 
-        static ConfigFlags parse_obfuscation_flags(CompilerInfo const& compiler_info,
-                                                   std::unique_ptr<std::string> const& obfuscation);
+        static ConfigFlags parse_obfuscation_flags(CompilerInfo const& compiler_info, std::string const& obfuscation);
     }
 
     CompilationConfigFactory::CompilationConfigFactory(Filesystem& filesystem, Path const& compiler_config_dir)
@@ -29,25 +29,39 @@ namespace vcpkg::bin2sth
         }
     }
 
-    std::unique_ptr<CompilationConfig> CompilationConfigFactory::create_config(
-        std::unique_ptr<std::string> const& compiler,
-        std::unique_ptr<std::string> const& optimization,
-        std::unique_ptr<std::string> const& obfuscation,
-        Triplet const& triplet) const
+    CompilationFlags::CompilationFlags(CompilerInfo const& compiler_info,
+                                       ConfigFlags&& optimization,
+                                       ConfigFlags&& obfuscation)
+        : m_compiler_info(compiler_info), m_optimization(std::move(optimization)), m_obfuscation(std::move(obfuscation))
     {
-        auto const compiler_nickname = compiler ? *compiler : "default";
-        auto const compiler_info_itr = m_compilers.find(compiler_nickname);
+    }
+
+    std::string CompilationFlags::c_compiler_full_path() const { return m_compiler_info.c_full_path; }
+    std::string CompilationFlags::cxx_compiler_full_path() const { return m_compiler_info.cxx_full_path; }
+
+    std::string CompilationFlags::make_cxx_flags() const
+    {
+        return std::string(m_optimization.flags).append(" ").append(m_obfuscation.flags);
+    }
+
+    std::string CompilationFlags::make_c_flags() const
+    {
+        return std::string(m_optimization.flags).append(" ").append(m_obfuscation.flags);
+    }
+
+    CompilationFlags CompilationConfigFactory::make_flags_from_config(const CompilationConfig& config) const
+    {
+        auto const compiler_info_itr = m_compilers.find(config.compiler_tag);
 
         Checks::check_exit(VCPKG_LINE_INFO,
                            compiler_info_itr != m_compilers.end(),
-                           std::string("Invalid compiler nickname: ").append(compiler_nickname));
+                           std::string("Invalid compiler nickname: ").append(config.compiler_tag));
 
         auto const& compiler_info = compiler_info_itr->second;
-        auto optimization_flags = details::parse_optimization_flags(compiler_info, optimization);
-        auto obfuscation_flags = details::parse_obfuscation_flags(compiler_info, obfuscation);
+        auto optimization_flags = details::parse_optimization_flags(compiler_info, config.optimization_tag);
+        auto obfuscation_flags = details::parse_obfuscation_flags(compiler_info, config.obfuscation_tag);
 
-        return std::make_unique<CompilationConfig>(
-            compiler_info, std::move(optimization_flags), std::move(obfuscation_flags), triplet);
+        return CompilationFlags{compiler_info, std::move(optimization_flags), std::move(obfuscation_flags)};
     }
 
     namespace details
@@ -123,27 +137,24 @@ namespace vcpkg::bin2sth
             return std::move(*compiler_info_opt.get());
         }
 
-        ConfigFlags parse_optimization_flags(CompilerInfo const&, std::unique_ptr<std::string> const& optimization)
+        ConfigFlags parse_optimization_flags(CompilerInfo const&, std::string const& optimization)
         {
-            constexpr auto DEFAULT_OPTIMIZATION = "O0";
-            auto const opt = optimization ? *optimization : DEFAULT_OPTIMIZATION;
             constexpr char const* supported_optimizations[] = {"O0", "O1", "O2", "O3", "Os"};
             for (auto const& supported_opt : supported_optimizations)
             {
-                if (supported_opt == *optimization)
+                if (supported_opt == optimization)
                 {
-                    return {opt, std::string("-").append(supported_opt)};
+                    return {optimization, std::string("-").append(supported_opt)};
                 }
             }
 
-            Checks::exit_with_message(VCPKG_LINE_INFO, std::string("Error: Invalid optimization: ").append(opt));
+            Checks::exit_with_message(VCPKG_LINE_INFO,
+                                      std::string("Error: Invalid optimization: ").append(optimization));
         }
 
-        ConfigFlags parse_obfuscation_flags(CompilerInfo const&, std::unique_ptr<std::string> const& obfuscation)
+        ConfigFlags parse_obfuscation_flags(CompilerInfo const&, std::string const& obf)
         {
-            constexpr auto DEFAULT_OBFUSCATION = "NONE";
-            auto const obf = Strings::ascii_to_uppercase(obfuscation ? *obfuscation : DEFAULT_OBFUSCATION);
-            if (obf == DEFAULT_OBFUSCATION) return {obf, ""};
+            if (obf == DEFAULT_OBFUSCATION_TAG) return {obf, ""};
 
             std::string obfuscation_flags;
             if (obf.size() == 2 && std::isalpha(obf[0]) && std::isdigit(obf[1]))
@@ -159,6 +170,38 @@ namespace vcpkg::bin2sth
 
             Checks::exit_with_message(VCPKG_LINE_INFO, std::string("Error: Invalid obfuscation: ").append(obf));
         }
+    }
+
+    size_t CompilerInfo::hash_code() const
+    {
+        auto const fn_str_hash = std::hash<std::string>();
+        size_t hash = 31;
+        hash = hash * 17 + fn_str_hash(name);
+        hash = hash * 17 + fn_str_hash(version);
+        hash = hash * 17 + fn_str_hash(c_full_path);
+        hash = hash * 17 + fn_str_hash(cxx_full_path);
+        return hash;
+    }
+
+    size_t ConfigFlags::hash_code() const
+    {
+        auto const fn_str_hash = std::hash<std::string>();
+        size_t hash = 31;
+        hash = hash * 17 + fn_str_hash(name);
+        hash = hash * 17 + fn_str_hash(flags);
+        return hash;
+    }
+
+    Optional<CompilationConfig> default_compilation_config(vcpkg::VcpkgCmdArguments const& args,
+                                                           vcpkg::Triplet default_triplet)
+    {
+        Optional<CompilationConfig> default_compilation = nullopt;
+        if (args.bin2sth_enabled())
+        {
+            default_compilation =
+                CompilationConfig(args.bin2sth_cc, args.bin2sth_opt, args.bin2sth_obf, default_triplet);
+        }
+        return default_compilation;
     }
 
 }

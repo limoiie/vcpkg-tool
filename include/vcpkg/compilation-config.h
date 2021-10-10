@@ -4,47 +4,52 @@
 
 namespace vcpkg::bin2sth
 {
-    struct CompilerInfo
-    {
-        std::string name;
-        std::string version;
-        std::string c_full_path;
-        std::string cxx_full_path;
-
-        std::string nickname() const { return std::string(name).append("-").append(version); }
-    };
-
-    struct ConfigFlags
-    {
-        std::string name;
-        std::string flags;
-
-        std::string nickname() const { return name; }
-    };
+    constexpr StringLiteral DEFAULT_COMPILER_TAG = "default";
+    constexpr StringLiteral DEFAULT_OPTIMIZATION_TAG = "";
+    constexpr StringLiteral DEFAULT_OBFUSCATION_TAG = "NONE";
 
     struct CompilationConfig
     {
     public:
-        CompilationConfig(CompilerInfo const& compiler,
-                          ConfigFlags optimization_flags,
-                          ConfigFlags obfuscation_flags,
+        CompilationConfig(std::string compiler_tag,
+                          std::string optimization_tag,
+                          std::string obfuscation_tag,
                           Triplet triplet);
 
-        std::string c_compiler_full_path() const;
-        std::string cxx_compiler_full_path() const;
+        CompilationConfig(std::unique_ptr<std::string> const& compiler_tag,
+                          std::unique_ptr<std::string> const& optimization_tag,
+                          std::unique_ptr<std::string> const& obfuscation_tag,
+                          Triplet triplet);
 
-        std::string make_cxx_flags() const;
-        std::string make_c_flags() const;
+        static Optional<CompilationConfig> from_canonical_name(std::string const& canonical_name, Triplet triplet);
+
+        void with_triplet(Triplet new_triplet);
 
         std::string to_string() const;
         void to_string(std::string&) const;
+        std::string canonical_name() const;
 
-    private:
-        CompilerInfo const& compiler_info;
-        ConfigFlags optimization;
-        ConfigFlags obfuscation;
+        size_t hash_code() const;
+
+        bool operator<(const CompilationConfig& other) const { return canonical_name() < other.canonical_name(); }
+
+        std::string compiler_tag;
+        std::string optimization_tag;
+        std::string obfuscation_tag;
 
         Triplet triplet;
     };
 
+    bool operator==(const CompilationConfig& left, const CompilationConfig& right);
+    inline bool operator!=(const CompilationConfig& left, const CompilationConfig& right) { return !(left == right); }
+
+}
+
+namespace std
+{
+    template<>
+    struct hash<vcpkg::bin2sth::CompilationConfig>
+    {
+        size_t operator()(const vcpkg::bin2sth::CompilationConfig& obj) const { return obj.hash_code(); }
+    };
 }
