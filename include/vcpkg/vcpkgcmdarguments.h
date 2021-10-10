@@ -162,12 +162,8 @@ namespace vcpkg
         constexpr static StringLiteral CMAKE_SCRIPT_ARG = "x-cmake-args";
         std::vector<std::string> cmake_args;
 
-        constexpr static StringLiteral BIN2STH_CC_ARG = "compiler";
-        std::unique_ptr<std::string> bin2sth_cc;
-        constexpr static StringLiteral BIN2STH_OPT_ARG = "optimization";
-        std::unique_ptr<std::string> bin2sth_opt;
-        constexpr static StringLiteral BIN2STH_OBF_ARG = "obfuscation";
-        std::unique_ptr<std::string> bin2sth_obf;
+        constexpr static StringLiteral BIN2STH_COMPILE_TRIPLET_ARG = "compile-triplet";
+        std::unique_ptr<std::string> bin2sth_compile_triplet;
 
         constexpr static StringLiteral DEBUG_SWITCH = "debug";
         Optional<bool> debug = nullopt;

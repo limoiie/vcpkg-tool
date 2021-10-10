@@ -289,9 +289,7 @@ namespace vcpkg
                     {BUILTIN_PORTS_ROOT_DIR_ARG, &VcpkgCmdArguments::builtin_ports_root_dir},
                     {BUILTIN_REGISTRY_VERSIONS_DIR_ARG, &VcpkgCmdArguments::builtin_registry_versions_dir},
                     {ASSET_SOURCES_ARG, &VcpkgCmdArguments::asset_sources_template_arg},
-                    {BIN2STH_CC_ARG, &VcpkgCmdArguments::bin2sth_cc},
-                    {BIN2STH_OPT_ARG, &VcpkgCmdArguments::bin2sth_opt},
-                    {BIN2STH_OBF_ARG, &VcpkgCmdArguments::bin2sth_obf},
+                    {BIN2STH_COMPILE_TRIPLET_ARG, &VcpkgCmdArguments::bin2sth_compile_triplet},
                 };
 
             constexpr static std::pair<StringView, std::vector<std::string> VcpkgCmdArguments::*>
@@ -817,9 +815,7 @@ namespace vcpkg
         } possible_inconsistencies[] = {
             {BINARY_CACHING_FEATURE, BINARY_SOURCES_ARG, !binary_sources.empty() && !binary_caching.value_or(true)},
             {MANIFEST_MODE_FEATURE, MANIFEST_ROOT_DIR_ARG, manifest_root_dir && !manifest_mode.value_or(true)},
-            {BIN2STH_MODE_FEATURE, BIN2STH_CC_ARG, bin2sth_cc && !bin2sth_enabled()},
-            {BIN2STH_MODE_FEATURE, BIN2STH_OPT_ARG, bin2sth_opt && !bin2sth_enabled()},
-            {BIN2STH_MODE_FEATURE, BIN2STH_OBF_ARG, bin2sth_obf && !bin2sth_enabled()},
+            {BIN2STH_MODE_FEATURE, BIN2STH_COMPILE_TRIPLET_ARG, bin2sth_compile_triplet && !bin2sth_enabled()},
         };
         for (const auto& el : possible_inconsistencies)
         {
@@ -1045,7 +1041,5 @@ namespace vcpkg
 
     constexpr StringLiteral VcpkgCmdArguments::CMAKE_SCRIPT_ARG;
 
-    constexpr StringLiteral VcpkgCmdArguments::BIN2STH_CC_ARG;
-    constexpr StringLiteral VcpkgCmdArguments::BIN2STH_OPT_ARG;
-    constexpr StringLiteral VcpkgCmdArguments::BIN2STH_OBF_ARG;
+    constexpr StringLiteral VcpkgCmdArguments::BIN2STH_COMPILE_TRIPLET_ARG;
 }

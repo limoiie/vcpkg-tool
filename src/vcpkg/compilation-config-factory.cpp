@@ -198,8 +198,9 @@ namespace vcpkg::bin2sth
         Optional<CompilationConfig> default_compilation = nullopt;
         if (args.bin2sth_enabled())
         {
+            auto const compile_triplet = args.bin2sth_compile_triplet ? *args.bin2sth_compile_triplet : "";
             default_compilation =
-                CompilationConfig(args.bin2sth_cc, args.bin2sth_opt, args.bin2sth_obf, default_triplet);
+                CompilationConfig::from_canonical_name(compile_triplet, std::move(default_triplet));
         }
         return default_compilation;
     }
