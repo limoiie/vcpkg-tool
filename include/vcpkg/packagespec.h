@@ -127,9 +127,10 @@ namespace vcpkg
         std::vector<FeatureSpec> to_feature_specs(const std::vector<std::string>& default_features,
                                                   const std::vector<std::string>& all_features) const;
 
-        static ExpectedS<FullPackageSpec> from_string(const std::string& spec_as_string,
-                                                      Triplet default_triplet,
-                                                      Optional<bin2sth::CompilationConfig> const& compilation_config);
+        static ExpectedS<FullPackageSpec> from_string(
+            const std::string& spec_as_string,
+            Triplet default_triplet,
+            const Optional<bin2sth::CompilationConfig>& compilation_config = nullopt);
 
         bool operator==(const FullPackageSpec& o) const
         {

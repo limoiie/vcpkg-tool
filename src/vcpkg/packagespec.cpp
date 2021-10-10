@@ -62,7 +62,7 @@ namespace vcpkg
     ExpectedS<FullPackageSpec> FullPackageSpec::from_string(
         const std::string& spec_as_string,
         Triplet default_triplet,
-        Optional<bin2sth::CompilationConfig> const& default_compilation)
+        const Optional<bin2sth::CompilationConfig>& default_compilation)
     {
         return parse_qualified_specifier(spec_as_string)
             .then([&](ParsedQualifiedSpecifier&& p) -> ExpectedS<FullPackageSpec> {
