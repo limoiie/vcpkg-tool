@@ -54,6 +54,7 @@ namespace vcpkg
     namespace bin2sth
     {
         struct CompilationConfigFactory;
+        struct CompilationConfig;
     }
 
     struct BinaryParagraph;
@@ -84,6 +85,12 @@ namespace vcpkg
         Path build_info_file_path(const PackageSpec& spec) const;
         Path listfile_path(const BinaryParagraph& pgh) const;
 
+        Path const& installed_root() const { return m_installed; }
+        Path installed_dir(const PackageSpec& spec) const;
+        Path installed_dir(const Optional<bin2sth::CompilationConfig>& compilation_config) const;
+        Path installed_dir(const Optional<bin2sth::CompilationConfig>& compilation_config,
+                           const Triplet& triplet) const;
+
         bool is_valid_triplet(Triplet t) const;
         const std::vector<std::string> get_available_triplets_names() const;
         const std::vector<TripletFile>& get_available_triplets() const;
@@ -101,7 +108,7 @@ namespace vcpkg
         Path buildtrees;
         Path downloads;
         Path packages;
-        Path installed;
+
         Path triplets;
         Path community_triplets;
         Path scripts;
@@ -188,6 +195,7 @@ namespace vcpkg
         Path builtin_ports_directory() const { return this->builtin_ports; }
 
     private:
+        Path m_installed;
         std::unique_ptr<details::VcpkgPathsImpl> m_pimpl;
         std::unique_ptr<bin2sth::CompilationConfigFactory> m_compilation_config_factory;
     };
