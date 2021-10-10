@@ -763,19 +763,16 @@ namespace vcpkg::Build
         if (auto const* p_compile_triplet = action.spec.compile_triplet().get())
         {
             auto const flags = paths.get_compilation_flags_factory().interpret(*p_compile_triplet);
-            variables.insert(variables.end(),
-                             {
-                                 // HACK: stringify the whole configuration, including compiler, optimization,
-                                 // obfuscation and triplet
-                                 {"VCPKG_BIN2STH_COMPILE_TRIPLET", p_compile_triplet->to_string()},
-                                 // HACK: configure the compilers
-                                 {"VCPKG_BIN2STH_C_COMPILER", flags.c_compiler_full_path()},
-                                 {"VCPKG_BIN2STH_CXX_COMPILER", flags.cxx_compiler_full_path()},
-                                 // HACK: set build type as DEBUG hence no need to overwrite the default optimization
-                                 // configuration HACK: configure the optimization and obfuscation
-                                 {"VCPKG_C_FLAGS_DEBUG", flags.make_c_flags()},
-                                 {"VCPKG_CXX_FLAGS_DEBUG", flags.make_cxx_flags()},
-                             });
+            // HACK: set build type as DEBUG for the convenience of optimization overwritten
+            auto const compilation_variables = std::initializer_list<CMakeVariable>{
+                {"VCPKG_BUILD_TYPE", "debug"},
+                {"VCPKG_C_FLAGS_DEBUG", flags.make_c_flags()},
+                {"VCPKG_CXX_FLAGS_DEBUG", flags.make_cxx_flags()},
+                {"VCPKG_BIN2STH_COMPILE_TRIPLET", p_compile_triplet->to_string()},
+                {"VCPKG_BIN2STH_C_COMPILER", flags.c_compiler_full_path()},
+                {"VCPKG_BIN2STH_CXX_COMPILER", flags.cxx_compiler_full_path()},
+            };
+            variables.insert(variables.end(), compilation_variables);
         }
 
         for (auto cmake_arg : args.cmake_args)
@@ -1551,6 +1548,14 @@ namespace vcpkg::Build
                             VCPKG_LINE_INFO,
                             "Unknown setting for VCPKG_BUILD_TYPE: %s. Valid settings are '', 'debug' and 'release'.",
                             variable_value);
+
+                    if (compile_triplet.has_value() && build_type != ConfigurationType::DEBUG)
+                    {
+                        // We only compile in debug-mode in bin2sth mode because only in debug mode the optimization
+                        // is unsetted by default, which is convenient for us to customize the compilation flags.
+                        print2("Overwriting VCPKG_BUILD_TYPE as 'debug' because of the specified compile-triplet\n");
+                        build_type = ConfigurationType::DEBUG;
+                    }
                     break;
                 case VcpkgTripletVar::ENV_PASSTHROUGH:
                     passthrough_env_vars_tracked = Strings::split(variable_value, ';');
