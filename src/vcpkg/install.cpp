@@ -8,6 +8,7 @@
 #include <vcpkg/build.h>
 #include <vcpkg/cmakevars.h>
 #include <vcpkg/commands.setinstalled.h>
+#include <vcpkg/compilation-config-factory.h>
 #include <vcpkg/configuration.h>
 #include <vcpkg/dependencies.h>
 #include <vcpkg/globalstate.h>
@@ -206,7 +207,9 @@ namespace vcpkg::Install
     {
         const auto package_dir = paths.package_dir(bcf.core_paragraph.spec);
         Triplet triplet = bcf.core_paragraph.spec.triplet();
-        const std::vector<StatusParagraphAndAssociatedFiles> pgh_and_files = get_installed_files(paths, *status_db);
+        Optional<bin2sth::CompilationConfig> compilation_config = bcf.core_paragraph.spec.compilation();
+        const std::vector<StatusParagraphAndAssociatedFiles> pgh_and_files =
+            get_installed_files(paths, *status_db, compilation_config);
 
         const SortedVector<std::string> package_files =
             build_list_of_package_files(paths.get_filesystem(), package_dir);
@@ -773,7 +776,8 @@ namespace vcpkg::Install
     void perform_and_exit(const VcpkgCmdArguments& args,
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
-                          Triplet host_triplet)
+                          Triplet host_triplet,
+                          Optional<bin2sth::CompilationConfig>&& default_compilation_config)
     {
         // input sanitization
         const ParsedArguments options =
@@ -985,7 +989,7 @@ namespace vcpkg::Install
 
         const std::vector<FullPackageSpec> specs = Util::fmap(args.command_arguments, [&](auto&& arg) {
             return Input::check_and_get_full_package_spec(
-                std::string(arg), default_triplet, COMMAND_STRUCTURE.example_text);
+                std::string(arg), default_triplet, default_compilation_config, COMMAND_STRUCTURE.example_text);
         });
 
         for (auto&& spec : specs)
@@ -1119,9 +1123,10 @@ namespace vcpkg::Install
     void InstallCommand::perform_and_exit(const VcpkgCmdArguments& args,
                                           const VcpkgPaths& paths,
                                           Triplet default_triplet,
-                                          Triplet host_triplet) const
+                                          Triplet host_triplet,
+                                          Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
     {
-        Install::perform_and_exit(args, paths, default_triplet, host_triplet);
+        Install::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compilation_config));
     }
 
     SpecSummary::SpecSummary(const PackageSpec& spec, const Dependencies::InstallPlanAction* action)

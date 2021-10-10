@@ -36,7 +36,8 @@ namespace vcpkg::Commands::Env
     void perform_and_exit(const VcpkgCmdArguments& args,
                           const VcpkgPaths& paths,
                           Triplet triplet,
-                          Triplet /*host_triplet*/)
+                          Triplet /*host_triplet*/,
+                          Optional<bin2sth::CompilationConfig>&& compilation_config)
     {
         const auto& fs = paths.get_filesystem();
 
@@ -48,8 +49,8 @@ namespace vcpkg::Commands::Env
 
         var_provider.load_generic_triplet_vars(triplet);
 
-        const Build::PreBuildInfo pre_build_info(
-            paths, triplet, var_provider.get_generic_triplet_vars(triplet).value_or_exit(VCPKG_LINE_INFO));
+        auto cmake_vars = var_provider.get_generic_triplet_vars(triplet).value_or_exit(VCPKG_LINE_INFO);
+        const Build::PreBuildInfo pre_build_info(paths, triplet, compilation_config, cmake_vars);
         const Toolset& toolset = paths.get_toolset(pre_build_info);
         auto build_env_cmd = Build::make_build_env_cmd(pre_build_info, toolset, paths);
 
@@ -121,8 +122,9 @@ namespace vcpkg::Commands::Env
     void EnvCommand::perform_and_exit(const VcpkgCmdArguments& args,
                                       const VcpkgPaths& paths,
                                       Triplet default_triplet,
-                                      Triplet host_triplet) const
+                                      Triplet host_triplet,
+                                      Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
     {
-        Env::perform_and_exit(args, paths, default_triplet, host_triplet);
+        Env::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compilation_config));
     }
 }

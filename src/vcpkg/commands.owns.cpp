@@ -9,7 +9,8 @@ namespace vcpkg::Commands::Owns
 {
     static void search_file(const VcpkgPaths& paths, const std::string& file_substr, const StatusParagraphs& status_db)
     {
-        const std::vector<StatusParagraphAndAssociatedFiles> installed_files = get_installed_files(paths, status_db);
+        const std::vector<StatusParagraphAndAssociatedFiles> installed_files =
+            get_installed_files(paths, status_db, nullopt);
         for (const StatusParagraphAndAssociatedFiles& pgh_and_file : installed_files)
         {
             const StatusParagraph& pgh = pgh_and_file.pgh;

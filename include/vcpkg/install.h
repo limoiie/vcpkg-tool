@@ -112,14 +112,16 @@ namespace vcpkg::Install
     void perform_and_exit(const VcpkgCmdArguments& args,
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
-                          Triplet host_triplet);
+                          Triplet host_triplet,
+                          Optional<bin2sth::CompilationConfig>&& default_compilation_config);
 
     struct InstallCommand : Commands::TripletCommand
     {
         virtual void perform_and_exit(const VcpkgCmdArguments& args,
                                       const VcpkgPaths& paths,
                                       Triplet default_triplet,
-                                      Triplet host_triplet) const override;
+                                      Triplet host_triplet,
+                                      Optional<bin2sth::CompilationConfig>&& default_compilation_config) const override;
     };
 
     void track_install_plan(Dependencies::ActionPlan& plan);

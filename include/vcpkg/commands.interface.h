@@ -5,6 +5,7 @@
 
 #include <vcpkg/base/files.h>
 
+#include <vcpkg/compilation-config.h>
 #include <vcpkg/triplet.h>
 
 namespace vcpkg::Commands
@@ -32,7 +33,8 @@ namespace vcpkg::Commands
         virtual void perform_and_exit(const VcpkgCmdArguments& args,
                                       const VcpkgPaths& paths,
                                       Triplet default_triplet,
-                                      Triplet host_triplet) const = 0;
+                                      Triplet host_triplet,
+                                      Optional<bin2sth::CompilationConfig>&& default_compilation_config) const = 0;
         virtual ~TripletCommand() = default;
     };
 }

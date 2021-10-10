@@ -9,12 +9,15 @@
 
 namespace vcpkg
 {
-    PackageSpec Input::check_and_get_package_spec(std::string&& spec_string,
-                                                  Triplet default_triplet,
-                                                  CStringView example_text)
+    PackageSpec Input::check_and_get_package_spec(
+        std::string&& spec_string,
+        Triplet default_triplet,
+        Optional<bin2sth::CompilationConfig> const& default_compilation_config,
+        CStringView example_text)
     {
         const std::string as_lowercase = Strings::ascii_to_lowercase(std::move(spec_string));
-        auto expected_spec = FullPackageSpec::from_string(as_lowercase, default_triplet);
+        auto expected_spec =
+            FullPackageSpec::from_string(as_lowercase, default_triplet, default_compilation_config);
         if (const auto spec = expected_spec.get())
         {
             return PackageSpec{spec->package_spec};
@@ -37,12 +40,14 @@ namespace vcpkg
         }
     }
 
-    FullPackageSpec Input::check_and_get_full_package_spec(std::string&& full_package_spec_as_string,
-                                                           Triplet default_triplet,
-                                                           CStringView example_text)
+    FullPackageSpec Input::check_and_get_full_package_spec(
+        std::string&& full_package_spec_as_string,
+        Triplet default_triplet,
+        Optional<bin2sth::CompilationConfig> const& default_compilation,
+        CStringView example_text)
     {
         const std::string as_lowercase = Strings::ascii_to_lowercase(std::move(full_package_spec_as_string));
-        auto expected_spec = FullPackageSpec::from_string(as_lowercase, default_triplet);
+        auto expected_spec = FullPackageSpec::from_string(as_lowercase, default_triplet, default_compilation);
         if (const auto spec = expected_spec.get())
         {
             return *spec;

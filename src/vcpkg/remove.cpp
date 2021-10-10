@@ -194,7 +194,10 @@ namespace vcpkg::Remove
         &valid_arguments,
     };
 
-    static void perform_and_exit(const VcpkgCmdArguments& args, const VcpkgPaths& paths, Triplet default_triplet)
+    static void perform_and_exit(const VcpkgCmdArguments& args,
+                                 const VcpkgPaths& paths,
+                                 Triplet default_triplet,
+                                 Optional<bin2sth::CompilationConfig>&& default_compilation_config)
     {
         if (paths.manifest_mode_enabled())
         {
@@ -235,7 +238,7 @@ namespace vcpkg::Remove
             }
             specs = Util::fmap(args.command_arguments, [&](auto&& arg) {
                 return Input::check_and_get_package_spec(
-                    std::string(arg), default_triplet, COMMAND_STRUCTURE.example_text);
+                    std::string(arg), default_triplet, default_compilation_config, COMMAND_STRUCTURE.example_text);
             });
 
             for (auto&& spec : specs)
@@ -314,8 +317,9 @@ namespace vcpkg::Remove
     void RemoveCommand::perform_and_exit(const VcpkgCmdArguments& args,
                                          const VcpkgPaths& paths,
                                          Triplet default_triplet,
-                                         Triplet /*host_triplet*/) const
+                                         Triplet /*host_triplet*/,
+                                         Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
     {
-        Remove::perform_and_exit(args, paths, default_triplet);
+        Remove::perform_and_exit(args, paths, default_triplet, std::move(default_compilation_config));
     }
 }

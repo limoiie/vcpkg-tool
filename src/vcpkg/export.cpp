@@ -366,10 +366,12 @@ namespace vcpkg::Export
         nullptr,
     };
 
-    static ExportArguments handle_export_command_arguments(const VcpkgPaths& paths,
-                                                           const VcpkgCmdArguments& args,
-                                                           Triplet default_triplet,
-                                                           const StatusParagraphs& status_db)
+    static ExportArguments handle_export_command_arguments(
+        const VcpkgPaths& paths,
+        const VcpkgCmdArguments& args,
+        Triplet default_triplet,
+        Optional<bin2sth::CompilationConfig>&& default_compilation_config,
+        const StatusParagraphs& status_db)
     {
         ExportArguments ret;
 
@@ -410,7 +412,7 @@ namespace vcpkg::Export
             // input sanitization
             ret.specs = Util::fmap(args.command_arguments, [&](auto&& arg) {
                 return Input::check_and_get_package_spec(
-                    std::string(arg), default_triplet, COMMAND_STRUCTURE.example_text);
+                    std::string(arg), default_triplet, default_compilation_config, COMMAND_STRUCTURE.example_text);
             });
         }
 
@@ -606,7 +608,10 @@ With a project open, go to Tools->NuGet Package Manager->Package Manager Console
         }
     }
 
-    void perform_and_exit(const VcpkgCmdArguments& args, const VcpkgPaths& paths, Triplet default_triplet)
+    void perform_and_exit(const VcpkgCmdArguments& args,
+                          const VcpkgPaths& paths,
+                          Triplet default_triplet,
+                          Optional<bin2sth::CompilationConfig>&& compilation_config)
     {
         if (paths.manifest_mode_enabled())
         {
@@ -616,7 +621,8 @@ With a project open, go to Tools->NuGet Package Manager->Package Manager Console
                 "may use export in classic mode by running vcpkg outside of a manifest-based project.");
         }
         const StatusParagraphs status_db = database_load_check(paths);
-        const auto opts = handle_export_command_arguments(paths, args, default_triplet, status_db);
+        const auto opts = handle_export_command_arguments(
+            paths, args, default_triplet, std::move(compilation_config), status_db);
         for (auto&& spec : opts.specs)
             Input::check_triplet(spec.triplet(), paths);
 
@@ -694,8 +700,9 @@ With a project open, go to Tools->NuGet Package Manager->Package Manager Console
     void ExportCommand::perform_and_exit(const VcpkgCmdArguments& args,
                                          const VcpkgPaths& paths,
                                          Triplet default_triplet,
-                                         Triplet /*host_triplet*/) const
+                                         Triplet /*host_triplet*/,
+                                         Optional<bin2sth::CompilationConfig>&& default_compilation_config) const
     {
-        Export::perform_and_exit(args, paths, default_triplet);
+        Export::perform_and_exit(args, paths, default_triplet, std::move(default_compilation_config));
     }
 }

@@ -7,7 +7,8 @@ namespace vcpkg
 {
     Command make_cmake_cmd(const VcpkgPaths& paths,
                            const Path& cmake_script,
-                           std::vector<CMakeVariable>&& pass_variables)
+                           std::vector<CMakeVariable>&& pass_variables,
+                           Optional<bin2sth::CompilationConfig> const& compilation_config)
     {
         auto local_variables = std::move(pass_variables);
         local_variables.emplace_back("VCPKG_ROOT_DIR", paths.root);
