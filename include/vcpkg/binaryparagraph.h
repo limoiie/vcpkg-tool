@@ -15,11 +15,13 @@ namespace vcpkg
         explicit BinaryParagraph(Parse::Paragraph fields);
         BinaryParagraph(const SourceParagraph& spgh,
                         Triplet triplet,
+                        Optional<bin2sth::CompilationConfig>&& compilation_config,
                         const std::string& abi_tag,
                         const std::vector<FeatureSpec>& deps);
         BinaryParagraph(const SourceParagraph& spgh,
                         const FeatureParagraph& fpgh,
                         Triplet triplet,
+                        Optional<bin2sth::CompilationConfig>&& compilation_config,
                         const std::vector<FeatureSpec>& deps);
 
         void canonicalize();

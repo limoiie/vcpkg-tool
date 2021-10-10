@@ -59,21 +59,33 @@ namespace vcpkg
         return feature_specs;
     }
 
-    ExpectedS<FullPackageSpec> FullPackageSpec::from_string(const std::string& spec_as_string, Triplet default_triplet)
+    ExpectedS<FullPackageSpec> FullPackageSpec::from_string(
+        const std::string& spec_as_string,
+        Triplet default_triplet,
+        Optional<bin2sth::CompilationConfig> const& default_compilation)
     {
         return parse_qualified_specifier(spec_as_string)
             .then([&](ParsedQualifiedSpecifier&& p) -> ExpectedS<FullPackageSpec> {
                 if (p.platform)
                     return "Error: platform specifier not allowed in this context: " + spec_as_string + "\n";
                 auto triplet = p.triplet ? Triplet::from_canonical_name(std::move(*p.triplet.get())) : default_triplet;
-                return FullPackageSpec({p.name, triplet}, p.features.value_or({}));
+                // TODO: support to specify compilation_config config in %param spec_as_string?
+                auto compilation_config = default_compilation;
+                if (auto* p_compilation_config = compilation_config.get())
+                {
+                    p_compilation_config->with_triplet(triplet);
+                }
+                return FullPackageSpec({p.name, triplet, std::move(compilation_config)}, p.features.value_or({}));
             });
     }
 
-    std::vector<PackageSpec> PackageSpec::to_package_specs(const std::vector<std::string>& ports, Triplet triplet)
+    std::vector<PackageSpec> PackageSpec::to_package_specs(
+        const std::vector<std::string>& ports,
+        Triplet triplet,
+        const Optional<bin2sth::CompilationConfig>& compilation_config)
     {
         return Util::fmap(ports, [&](const std::string& spec_as_string) -> PackageSpec {
-            return {spec_as_string, triplet};
+            return {spec_as_string, triplet, compilation_config};
         });
     }
 
@@ -81,14 +93,38 @@ namespace vcpkg
 
     Triplet PackageSpec::triplet() const { return this->m_triplet; }
 
-    std::string PackageSpec::dir() const { return Strings::format("%s_%s", this->m_name, this->m_triplet); }
+    Optional<bin2sth::CompilationConfig> const& PackageSpec::compilation() const { return this->m_compilation_config; }
 
-    std::string PackageSpec::to_string() const { return Strings::format("%s:%s", this->name(), this->triplet()); }
-    void PackageSpec::to_string(std::string& s) const { Strings::append(s, this->name(), ':', this->triplet()); }
+    std::string PackageSpec::dir() const
+    {
+        auto dir = Strings::format("%s_%s", this->m_name, this->m_triplet);
+        if (auto const p_compilation = this->m_compilation_config.get())
+        {
+            dir.append("_").append(p_compilation->to_string());
+        }
+        return dir;
+    }
+
+    std::string PackageSpec::to_string() const
+    {
+        std::string dir;
+        this->to_string(dir);
+        return dir;
+    }
+
+    void PackageSpec::to_string(std::string& s) const
+    {
+        Strings::append(s, this->name(), ':', this->triplet());
+        if (auto const p_compilation = this->m_compilation_config.get())
+        {
+            Strings::append(s, "_", p_compilation->to_string());
+        }
+    }
 
     bool operator==(const PackageSpec& left, const PackageSpec& right)
     {
-        return left.name() == right.name() && left.triplet() == right.triplet();
+        return left.name() == right.name() && left.triplet() == right.triplet() &&
+               left.compilation() == right.compilation();
     }
 
     ExpectedS<Features> Features::from_string(const std::string& name)

@@ -4,6 +4,7 @@
 #include <vcpkg/base/json.h>
 #include <vcpkg/base/optional.h>
 
+#include <vcpkg/compilation-config.h>
 #include <vcpkg/platform-expression.h>
 #include <vcpkg/triplet.h>
 #include <vcpkg/versions.h>
@@ -25,12 +26,21 @@ namespace vcpkg
     {
         PackageSpec() = default;
         PackageSpec(std::string name, Triplet triplet) : m_name(std::move(name)), m_triplet(triplet) { }
+        PackageSpec(std::string name, Triplet triplet, const Optional<bin2sth::CompilationConfig>& compilation_config)
+            : m_name(std::move(name)), m_triplet(triplet), m_compilation_config(std::move(compilation_config))
+        {
+        }
 
-        static std::vector<PackageSpec> to_package_specs(const std::vector<std::string>& ports, Triplet triplet);
+        static std::vector<PackageSpec> to_package_specs(
+            const std::vector<std::string>& ports,
+            Triplet triplet,
+            const Optional<bin2sth::CompilationConfig>& compilation_config);
 
         const std::string& name() const;
 
         Triplet triplet() const;
+
+        Optional<bin2sth::CompilationConfig> const& compilation() const;
 
         std::string dir() const;
 
@@ -39,14 +49,18 @@ namespace vcpkg
 
         bool operator<(const PackageSpec& other) const
         {
-            if (name() < other.name()) return true;
-            if (name() > other.name()) return false;
-            return triplet() < other.triplet();
+            if (name() != other.name()) return name() < other.name();
+            if (triplet() != other.triplet()) return triplet() < other.triplet();
+            if (compilation() == other.compilation()) return false;
+            if (!compilation().has_value()) return true;
+            if (!other.compilation().has_value()) return false;
+            return compilation().value_or_exit(VCPKG_LINE_INFO) < other.compilation().value_or_exit(VCPKG_LINE_INFO);
         }
 
     private:
         std::string m_name;
         Triplet m_triplet;
+        Optional<bin2sth::CompilationConfig> m_compilation_config;
     };
 
     bool operator==(const PackageSpec& left, const PackageSpec& right);
@@ -65,6 +79,7 @@ namespace vcpkg
         const std::string& name() const { return m_spec.name(); }
         const std::string& feature() const { return m_feature; }
         Triplet triplet() const { return m_spec.triplet(); }
+        const Optional<bin2sth::CompilationConfig>& compilation() const { return m_spec.compilation(); }
 
         const PackageSpec& spec() const { return m_spec; }
 
@@ -112,7 +127,9 @@ namespace vcpkg
         std::vector<FeatureSpec> to_feature_specs(const std::vector<std::string>& default_features,
                                                   const std::vector<std::string>& all_features) const;
 
-        static ExpectedS<FullPackageSpec> from_string(const std::string& spec_as_string, Triplet default_triplet);
+        static ExpectedS<FullPackageSpec> from_string(const std::string& spec_as_string,
+                                                      Triplet default_triplet,
+                                                      Optional<bin2sth::CompilationConfig> const& compilation_config);
 
         bool operator==(const FullPackageSpec& o) const
         {
@@ -207,6 +224,14 @@ namespace std
             size_t hash = 17;
             hash = hash * 31 + std::hash<std::string>()(value.name());
             hash = hash * 31 + std::hash<vcpkg::Triplet>()(value.triplet());
+
+            auto const compilation_opt = value.compilation();
+            auto const hash_compilation =
+                compilation_opt.has_value()
+                    ? std::hash<vcpkg::bin2sth::CompilationConfig>()(compilation_opt.value_or_exit(VCPKG_LINE_INFO))
+                    : 0;
+
+            hash = hash * 31 + hash_compilation;
             return hash;
         }
     };

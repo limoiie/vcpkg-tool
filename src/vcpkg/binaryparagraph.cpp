@@ -15,6 +15,7 @@ namespace vcpkg
         static const std::string PORT_VERSION = "Port-Version";
         static const std::string ARCHITECTURE = "Architecture";
         static const std::string MULTI_ARCH = "Multi-Arch";
+        static const std::string COMPILATION_CONFIG = "Compilation-Config";
     }
 
     namespace Fields
@@ -37,11 +38,13 @@ namespace vcpkg
         ParagraphParser parser(std::move(fields));
 
         {
-            std::string name;
-            parser.required_field(Fields::PACKAGE, name);
-            std::string architecture;
-            parser.required_field(Fields::ARCHITECTURE, architecture);
-            this->spec = PackageSpec(std::move(name), Triplet::from_canonical_name(std::move(architecture)));
+            auto name = parser.required_field(Fields::PACKAGE);
+            auto architecture = parser.required_field(Fields::ARCHITECTURE);
+            auto compilation = parser.optional_field(Fields::COMPILATION_CONFIG);
+
+            auto triple = Triplet::from_canonical_name(std::move(architecture));
+            auto compilation_config = bin2sth::CompilationConfig::from_canonical_name(std::move(compilation), triple);
+            this->spec = PackageSpec(std::move(name), triple, std::move(compilation_config));
         }
 
         // one or the other
@@ -105,9 +108,10 @@ namespace vcpkg
 
     BinaryParagraph::BinaryParagraph(const SourceParagraph& spgh,
                                      Triplet triplet,
+                                     Optional<bin2sth::CompilationConfig>&& compilation_config,
                                      const std::string& abi_tag,
                                      const std::vector<FeatureSpec>& deps)
-        : spec(spgh.name, triplet)
+        : spec(spgh.name, triplet, std::move(compilation_config))
         , version(spgh.version)
         , port_version(spgh.port_version)
         , description(spgh.description)
@@ -125,8 +129,9 @@ namespace vcpkg
     BinaryParagraph::BinaryParagraph(const SourceParagraph& spgh,
                                      const FeatureParagraph& fpgh,
                                      Triplet triplet,
+                                     Optional<bin2sth::CompilationConfig>&& compilation_config,
                                      const std ::vector<FeatureSpec>& deps)
-        : spec(spgh.name, triplet)
+        : spec(spgh.name, triplet, std::move(compilation_config))
         , version()
         , port_version()
         , description(fpgh.description)
@@ -170,16 +175,23 @@ namespace vcpkg
 
     std::string BinaryParagraph::displayname() const
     {
+        std::string compilation_msg;
+        if (auto const* compilation_config = this->spec.compilation().get())
+            compilation_msg.assign("_").append(compilation_config->canonical_name());
+
         if (!this->is_feature() || this->feature == "core")
-            return Strings::format("%s:%s", this->spec.name(), this->spec.triplet());
-        return Strings::format("%s[%s]:%s", this->spec.name(), this->feature, this->spec.triplet());
+            return Strings::format("%s:%s%s", this->spec.name(), this->spec.triplet(), compilation_msg);
+        return Strings::format("%s[%s]:%s%s", this->spec.name(), this->feature, this->spec.triplet(), compilation_msg);
     }
 
     std::string BinaryParagraph::dir() const { return this->spec.dir(); }
 
     std::string BinaryParagraph::fullstem() const
     {
-        return Strings::format("%s_%s_%s", this->spec.name(), this->version, this->spec.triplet());
+        auto full_stem = Strings::format("%s_%s_%s", this->spec.name(), this->version, this->spec.triplet());
+        if (auto const* compilation_config = this->spec.compilation().get())
+            full_stem.append("_").append(compilation_config->canonical_name());
+        return full_stem;
     }
 
     bool operator==(const BinaryParagraph& lhs, const BinaryParagraph& rhs)
@@ -266,6 +278,11 @@ namespace vcpkg
 
         serialize_string(Fields::ARCHITECTURE, pgh.spec.triplet().to_string(), out_str);
         serialize_string(Fields::MULTI_ARCH, "same", out_str);
+
+        if (auto const* p_compilation_config = pgh.spec.compilation().get())
+        {
+            serialize_string(Fields::COMPILATION_CONFIG, p_compilation_config->to_string(), out_str);
+        }
 
         serialize_paragraph(Fields::MAINTAINER, pgh.maintainers, out_str);
 
