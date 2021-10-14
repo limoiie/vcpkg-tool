@@ -26,8 +26,14 @@ namespace vcpkg::bin2sth
     {
     }
 
-    std::string CompilationFlags::c_compiler_full_path() const { return m_compiler_info.c_full_path; }
-    std::string CompilationFlags::cxx_compiler_full_path() const { return m_compiler_info.cxx_full_path; }
+    std::string CompilationFlags::c_compiler_full_path() const
+    {
+        return m_compiler_info.c_full_path.generic_u8string();
+    }
+    std::string CompilationFlags::cxx_compiler_full_path() const
+    {
+        return m_compiler_info.cxx_full_path.generic_u8string();
+    }
 
     std::string CompilationFlags::make_cxx_flags() const
     {

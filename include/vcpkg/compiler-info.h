@@ -10,10 +10,11 @@ namespace vcpkg
     {
         std::string name;
         std::string version;
-        std::string c_full_path;
-        std::string cxx_full_path;
+        Path c_full_path;
+        Path cxx_full_path;
 
-        static CompilerInfo load_compiler_info(Filesystem& filesystem, const Path& compiler_info_path);
+        static CompilerInfo load(const Filesystem& filesystem, const Path& path);
+        static void dump(Filesystem& filesystem, const Path& path, const CompilerInfo& instance);
 
         size_t hash_code() const;
         std::string nickname() const { return std::string(name).append("-").append(version); }

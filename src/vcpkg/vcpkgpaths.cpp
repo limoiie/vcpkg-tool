@@ -628,11 +628,11 @@ namespace vcpkg
     {
         return m_pimpl->available_compilers.get_lazy([this]() -> std::map<std::string, CompilerInfo> {
             std::map<std::string, CompilerInfo> compilers;
-            Filesystem& fs = this->get_filesystem();
+            const Filesystem& fs = this->get_filesystem();
             for (auto const& compiler_config_path :
                  fs.get_regular_files_recursive(vcpkg_bin2sth_compiler_config_dir, VCPKG_LINE_INFO))
             {
-                auto compiler_info = CompilerInfo::load_compiler_info(fs, compiler_config_path);
+                auto compiler_info = CompilerInfo::load(fs, compiler_config_path);
                 compilers.emplace(compiler_info.nickname(), std::move(compiler_info));
             }
             return compilers;

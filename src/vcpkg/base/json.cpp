@@ -1083,6 +1083,16 @@ namespace vcpkg::Json
     }
     // } auto parse()
 
+    void dump_file(Filesystem& fs, const Path& path, const Object& obj, JsonStyle style, vcpkg::LineInfo li)
+    {
+        fs.write_contents(path, stringify(obj, style), li);
+    }
+
+    void dump_file(Filesystem& fs, const Path& path, const Object& obj, JsonStyle style, std::error_code& ec)
+    {
+        fs.write_contents(path, stringify(obj, style), ec);
+    }
+
     namespace
     {
         struct Stringifier

@@ -294,6 +294,9 @@ namespace vcpkg::Json
                                                                                       StringView origin = {}) noexcept;
     std::pair<Value, JsonStyle> parse_file(vcpkg::LineInfo li, const Filesystem&, const Path&) noexcept;
 
+    void dump_file(Filesystem& fs, const Path& path, const Object& json, JsonStyle style, vcpkg::LineInfo li);
+    void dump_file(Filesystem& fs, const Path& path, const Object& json, JsonStyle style, std::error_code& ec);
+
     std::string stringify(const Value&, JsonStyle style);
     std::string stringify(const Object&, JsonStyle style);
     std::string stringify(const Array&, JsonStyle style);
