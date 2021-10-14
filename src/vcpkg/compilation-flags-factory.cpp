@@ -87,9 +87,9 @@ namespace vcpkg::bin2sth
                 auto const loop_num = std::to_string(static_cast<unsigned>(obf[1] - '0'));
                 switch (obf[0])
                 {
-                    case 'S': return {obf, std::string("-llvm -sub -llvm -sub-loop=").append(loop_num)};
-                    case 'B': return {obf, std::string("-llvm -bcf -llvm -bcf-loop=").append(loop_num)};
-                    case 'F': return {obf, std::string("-llvm -fla -llvm -fla-loop=").append(loop_num)};
+                    case 'S': return {obf, Strings::format("-mllvm -sub -mllvm -sub_loop=%s", loop_num)};
+                    case 'B': return {obf, Strings::format("-mllvm -bcf -mllvm -bcf_loop=%s", loop_num)};
+                    case 'F': return {obf, Strings::format("-mllvm -fla -mllvm -split -mllvm -split_num=%s", loop_num)};
                 }
             }
 
