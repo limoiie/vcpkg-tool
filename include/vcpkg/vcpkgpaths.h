@@ -61,6 +61,7 @@ namespace vcpkg
     struct Environment;
     struct PackageSpec;
     struct Triplet;
+    struct CompilerInfo;
 
     struct VcpkgPaths
     {
@@ -96,6 +97,9 @@ namespace vcpkg
         const std::map<std::string, std::string>& get_cmake_script_hashes() const;
         StringView get_ports_cmake_hash() const;
         const Path get_triplet_file_path(Triplet triplet) const;
+
+        const std::vector<std::string> get_available_compiler_nicknames() const;
+        const std::map<std::string, CompilerInfo>& get_available_compilers() const;
 
         LockFile& get_installed_lockfile() const;
         void flush_lockfile() const;
@@ -184,7 +188,7 @@ namespace vcpkg
         const Build::CompilerInfo& get_compiler_info(const Build::AbiInfo& abi_info) const;
         bool manifest_mode_enabled() const { return get_manifest().has_value(); }
 
-        const bin2sth::CompilationFlagsFactory& get_compilation_flags_factory() const;
+        bin2sth::CompilationFlagsFactory get_compilation_flags_factory() const;
 
         const FeatureFlagSettings& get_feature_flags() const;
         void track_feature_flag_metrics() const;
@@ -196,6 +200,5 @@ namespace vcpkg
     private:
         Path m_installed;
         std::unique_ptr<details::VcpkgPathsImpl> m_pimpl;
-        std::unique_ptr<bin2sth::CompilationFlagsFactory> m_compile_triplet_factory;
     };
 }

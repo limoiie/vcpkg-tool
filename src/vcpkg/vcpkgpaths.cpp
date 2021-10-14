@@ -13,6 +13,7 @@
 #include <vcpkg/commands.h>
 #include <vcpkg/compilation-flags-factory.h>
 #include <vcpkg/compile-triplet.h>
+#include <vcpkg/compiler-info.h>
 #include <vcpkg/configuration.h>
 #include <vcpkg/globalstate.h>
 #include <vcpkg/metrics.h>
@@ -246,6 +247,7 @@ namespace vcpkg
             }
 
             Lazy<std::vector<VcpkgPaths::TripletFile>> available_triplets;
+            Lazy<std::map<std::string, CompilerInfo>> available_compilers;
             Lazy<std::vector<Toolset>> toolsets;
             Lazy<std::map<std::string, std::string>> cmake_script_hashes;
             Lazy<std::string> ports_cmake_hash;
@@ -443,9 +445,6 @@ namespace vcpkg
         }
         m_pimpl->triplets_dirs.emplace_back(triplets);
         m_pimpl->triplets_dirs.emplace_back(community_triplets);
-
-        m_compile_triplet_factory =
-            std::make_unique<bin2sth::CompilationFlagsFactory>(filesystem, vcpkg_bin2sth_compiler_config_dir);
     }
 
     Path VcpkgPaths::package_dir(const PackageSpec& spec) const { return this->packages / spec.dir(); }
@@ -617,6 +616,27 @@ namespace vcpkg
                 Checks::exit_with_message(
                     VCPKG_LINE_INFO, "Error: Triplet file %s.cmake not found", triplet.canonical_name());
             });
+    }
+
+    const std::vector<std::string> VcpkgPaths::get_available_compiler_nicknames() const
+    {
+        return vcpkg::Util::fmap(this->get_available_compilers(),
+                                 [](auto&& pair) -> std::string { return pair.first; });
+    }
+
+    const std::map<std::string, CompilerInfo>& VcpkgPaths::get_available_compilers() const
+    {
+        return m_pimpl->available_compilers.get_lazy([this]() -> std::map<std::string, CompilerInfo> {
+            std::map<std::string, CompilerInfo> compilers;
+            Filesystem& fs = this->get_filesystem();
+            for (auto const& compiler_config_path :
+                 fs.get_regular_files_recursive(vcpkg_bin2sth_compiler_config_dir, VCPKG_LINE_INFO))
+            {
+                auto compiler_info = CompilerInfo::load_compiler_info(fs, compiler_config_path);
+                compilers.emplace(compiler_info.nickname(), std::move(compiler_info));
+            }
+            return compilers;
+        });
     }
 
     const Path& VcpkgPaths::get_tool_exe(const std::string& tool) const
@@ -1189,9 +1209,9 @@ namespace vcpkg
         }
     }
 
-    const bin2sth::CompilationFlagsFactory& VcpkgPaths::get_compilation_flags_factory() const
+    bin2sth::CompilationFlagsFactory VcpkgPaths::get_compilation_flags_factory() const
     {
-        return *m_compile_triplet_factory;
+        return {get_available_compilers()};
     }
 
     VcpkgPaths::~VcpkgPaths() = default;

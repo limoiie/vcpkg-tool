@@ -7,6 +7,7 @@
 namespace vcpkg
 {
     struct Triplet;
+    struct CompilerInfo;
     struct VcpkgCmdArguments;
     struct VcpkgPaths;
 }
@@ -14,17 +15,6 @@ namespace vcpkg
 namespace vcpkg::bin2sth
 {
     struct CompileTriplet;
-
-    struct CompilerInfo
-    {
-        std::string name;
-        std::string version;
-        std::string c_full_path;
-        std::string cxx_full_path;
-
-        size_t hash_code() const;
-        std::string nickname() const { return std::string(name).append("-").append(version); }
-    };
 
     struct ConfigFlags
     {
@@ -52,24 +42,18 @@ namespace vcpkg::bin2sth
 
     struct CompilationFlagsFactory
     {
-        CompilationFlagsFactory(Filesystem& filesystem, Path const& compiler_config_dir);
+        CompilationFlagsFactory(const std::map<std::string, CompilerInfo>& compilers);
 
-        CompilationFlags interpret(CompileTriplet const& config) const;
+        CompilationFlags interpret(const CompileTriplet& config) const;
 
     private:
-        std::map<std::string, CompilerInfo> m_compilers;
+        const std::map<std::string, CompilerInfo>& m_compilers;
     };
 
 }
 
 namespace std
 {
-    template<>
-    struct hash<vcpkg::bin2sth::CompilerInfo>
-    {
-        size_t operator()(vcpkg::bin2sth::CompilerInfo const& obj) const { return obj.hash_code(); }
-    };
-
     template<>
     struct hash<vcpkg::bin2sth::ConfigFlags>
     {
