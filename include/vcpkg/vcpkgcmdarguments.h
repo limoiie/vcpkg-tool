@@ -124,13 +124,16 @@ namespace vcpkg
         constexpr static StringLiteral MANIFEST_ROOT_DIR_ARG = "x-manifest-root";
         std::unique_ptr<std::string> manifest_root_dir;
 
+        constexpr static StringLiteral BUILDTREES_ROOT_DIR_ENV = "VCPKG_BUILDTREES";
         constexpr static StringLiteral BUILDTREES_ROOT_DIR_ARG = "x-buildtrees-root";
         std::unique_ptr<std::string> buildtrees_root_dir;
         constexpr static StringLiteral DOWNLOADS_ROOT_DIR_ENV = "VCPKG_DOWNLOADS";
         constexpr static StringLiteral DOWNLOADS_ROOT_DIR_ARG = "downloads-root";
         std::unique_ptr<std::string> downloads_root_dir;
+        constexpr static StringLiteral INSTALL_ROOT_DIR_ENV = "VCPKG_INSTALL";
         constexpr static StringLiteral INSTALL_ROOT_DIR_ARG = "x-install-root";
         std::unique_ptr<std::string> install_root_dir;
+        constexpr static StringLiteral PACKAGES_ROOT_DIR_ENV = "VCPKG_PACKAGES";
         constexpr static StringLiteral PACKAGES_ROOT_DIR_ARG = "x-packages-root";
         std::unique_ptr<std::string> packages_root_dir;
         constexpr static StringLiteral SCRIPTS_ROOT_DIR_ARG = "x-scripts-root";
