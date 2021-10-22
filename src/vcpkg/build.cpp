@@ -763,11 +763,17 @@ namespace vcpkg::Build
         if (auto const* p_compile_triplet = action.spec.compile_triplet().get())
         {
             auto const flags = paths.get_compilation_flags_factory().interpret(*p_compile_triplet);
-            // HACK: set build type as DEBUG for the convenience of optimization overwritten
+            // HACK: in bin2sth mode, we only build release type, whose flags will be overwritten in corresponding
+            //  toolchain cmake files. To be more concrete, the 'release' build-type is actually configured as debug
+            //  and accepts different optimization options. The reason why not build debug type directly is that many
+            //  portfile.cmake files only install include/share or something like that when VCPKG_BUILD_TYPE=release.
+            //  Hence, to ensure the integrity of packages meanwhile preserve the compilation-configurability, we set
+            //  VCPKG_BUILD_TYPE=release (integrity), and overwrite its value in toolchain file (for the
+            //  configurability).
             auto const compilation_variables = std::initializer_list<CMakeVariable>{
-                {"VCPKG_BUILD_TYPE", "debug"},
-                {"VCPKG_C_FLAGS_DEBUG", flags.make_c_flags()},
-                {"VCPKG_CXX_FLAGS_DEBUG", flags.make_cxx_flags()},
+                {"VCPKG_BUILD_TYPE", "release"},
+                {"VCPKG_C_FLAGS_RELEASE", flags.make_c_flags()},
+                {"VCPKG_CXX_FLAGS_RELEASE", flags.make_cxx_flags()},
                 {"VCPKG_BIN2STH_COMPILE_TRIPLET", p_compile_triplet->to_string()},
                 {"VCPKG_BIN2STH_C_COMPILER", flags.c_compiler_full_path()},
                 {"VCPKG_BIN2STH_CXX_COMPILER", flags.cxx_compiler_full_path()},
