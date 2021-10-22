@@ -75,9 +75,12 @@ namespace vcpkg
         parser.required_field(Fields::MULTI_ARCH, multi_arch);
 
         Triplet my_triplet = this->spec.triplet();
+        Optional<bin2sth::CompileTriplet> my_compile_triplet = this->spec.compile_triplet();
         this->dependencies = Util::fmap(
             parse_qualified_specifier_list(parser.optional_field(Fields::DEPENDS)).value_or_exit(VCPKG_LINE_INFO),
-            [my_triplet](const ParsedQualifiedSpecifier& dep) {
+            [my_triplet, my_compile_triplet](const ParsedQualifiedSpecifier& dep) {
+                // when the qualification is the same as current spec's, it could be stripped out in serialization
+                auto const default_qualified = !dep.triplet.has_value() || dep.triplet.get()->empty();
                 auto triplet = dep.triplet.map([](auto&& s) { return Triplet::from_canonical_name(std::string(s)); })
                                    .value_or(my_triplet);
                 auto compile_triplet =
@@ -85,7 +88,7 @@ namespace vcpkg
                         .map([&triplet](auto&& s) {
                             return bin2sth::CompileTriplet::from_canonical_name(std::string(s), triplet);
                         })
-                        .value_or(nullopt);
+                        .value_or(default_qualified ? my_compile_triplet : nullopt);
                 // for compatibility with previous vcpkg versions, we discard all irrelevant information
                 return PackageSpec{dep.name, triplet, compile_triplet};
             });
