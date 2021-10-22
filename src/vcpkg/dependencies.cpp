@@ -473,6 +473,10 @@ namespace vcpkg::Dependencies
         }
 
         const std::string features = Strings::join(",", feature_list);
+        if (auto* pct = this->spec.compile_triplet().get())
+        {
+            return Strings::format("%s[%s]:%s_%s", this->spec.name(), features, this->spec.triplet(), pct->to_string());
+        }
         return Strings::format("%s[%s]:%s", this->spec.name(), features, this->spec.triplet());
     }
     const std::string& InstallPlanAction::public_abi() const
