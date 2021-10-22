@@ -206,6 +206,7 @@ namespace vcpkg
         std::string name;
         Optional<std::vector<std::string>> features;
         Optional<std::string> triplet;
+        Optional<std::string> compile_triplet;
         Optional<PlatformExpression::Expr> platform;
     };
 

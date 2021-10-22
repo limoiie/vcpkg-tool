@@ -7,6 +7,8 @@
 
 namespace vcpkg
 {
+    static constexpr StringLiteral SEP_TRIPLET_COMPILE_TRIPLET = "_";
+
     std::string FeatureSpec::to_string() const
     {
         std::string ret;
@@ -99,7 +101,7 @@ namespace vcpkg
         auto dir = Strings::format("%s_%s", this->m_name, this->m_triplet);
         if (auto const p_compilation = this->m_compile_triplet.get())
         {
-            dir.append("_").append(p_compilation->to_string());
+            dir.append(SEP_TRIPLET_COMPILE_TRIPLET).append(p_compilation->to_string());
         }
         return dir;
     }
@@ -116,7 +118,7 @@ namespace vcpkg
         Strings::append(s, this->name(), ':', this->triplet());
         if (auto const p_compilation = this->m_compile_triplet.get())
         {
-            Strings::append(s, "_", p_compilation->to_string());
+            Strings::append(s, SEP_TRIPLET_COMPILE_TRIPLET, p_compilation->to_string());
         }
     }
 
@@ -146,6 +148,12 @@ namespace vcpkg
         // (libwebp[vwebp_sdl]).
         // TODO: we need to rename this feature, then remove underscores from this list.
         return is_package_name_char(ch) || ch == '_';
+    }
+
+    static bool is_compile_triplet_char(char32_t ch)
+    {
+        // example: clang-9.0.1_O1_O2
+        return Parse::ParserBase::is_alphanumdash(ch) || ch == '_' || ch == '.';
     }
 
     ExpectedS<ParsedQualifiedSpecifier> parse_qualified_specifier(StringView input)
@@ -256,6 +264,15 @@ namespace vcpkg
             {
                 parser.add_error("expected triplet name (must be lowercase, digits, '-')");
                 return nullopt;
+            }
+            if (parser.cur() == SEP_TRIPLET_COMPILE_TRIPLET[0])
+            {
+                parser.next();
+                ret.compile_triplet = parser.match_zero_or_more(is_compile_triplet_char).to_string();
+                if (ret.compile_triplet.get()->empty()) {
+                    parser.add_error("expected compile-triplet name (must be lowercase, digits, '-', '_')");
+                    return nullopt;
+                }
             }
         }
         parser.skip_tabs_spaces();

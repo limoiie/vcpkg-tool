@@ -78,13 +78,16 @@ namespace vcpkg
         this->dependencies = Util::fmap(
             parse_qualified_specifier_list(parser.optional_field(Fields::DEPENDS)).value_or_exit(VCPKG_LINE_INFO),
             [my_triplet](const ParsedQualifiedSpecifier& dep) {
+                auto triplet = dep.triplet.map([](auto&& s) { return Triplet::from_canonical_name(std::string(s)); })
+                                   .value_or(my_triplet);
+                auto compile_triplet =
+                    dep.compile_triplet
+                        .map([&triplet](auto&& s) {
+                            return bin2sth::CompileTriplet::from_canonical_name(std::string(s), triplet);
+                        })
+                        .value_or(nullopt);
                 // for compatibility with previous vcpkg versions, we discard all irrelevant information
-                return PackageSpec{
-                    dep.name,
-                    dep.triplet.map([](auto&& s) { return Triplet::from_canonical_name(std::string(s)); })
-                        .value_or(my_triplet),
-                    nullopt  // TODO: do we need to put compile-triplet into Fields::DEPENDS?
-                };
+                return PackageSpec{dep.name, triplet, compile_triplet};
             });
         if (!this->is_feature())
         {
