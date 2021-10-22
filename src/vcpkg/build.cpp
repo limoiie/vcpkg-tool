@@ -765,7 +765,7 @@ namespace vcpkg::Build
             auto const flags = paths.get_compilation_flags_factory().interpret(*p_compile_triplet);
             // HACK: set build type as DEBUG for the convenience of optimization overwritten
             auto const compilation_variables = std::initializer_list<CMakeVariable>{
-                //{"VCPKG_BUILD_TYPE", "debug"},
+                {"VCPKG_BUILD_TYPE", "debug"},
                 {"VCPKG_C_FLAGS_DEBUG", flags.make_c_flags()},
                 {"VCPKG_CXX_FLAGS_DEBUG", flags.make_cxx_flags()},
                 {"VCPKG_BIN2STH_COMPILE_TRIPLET", p_compile_triplet->to_string()},
