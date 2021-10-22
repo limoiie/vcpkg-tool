@@ -25,7 +25,7 @@ namespace vcpkg
     struct PackageSpec
     {
         PackageSpec() = default;
-        PackageSpec(std::string name, Triplet triplet) : m_name(std::move(name)), m_triplet(triplet) { }
+        //PackageSpec(std::string name, Triplet triplet) : m_name(std::move(name)), m_triplet(triplet) { }
         PackageSpec(std::string name, Triplet triplet, const Optional<bin2sth::CompileTriplet>& compile_triplet)
             : m_name(std::move(name)), m_triplet(triplet), m_compile_triplet(std::move(compile_triplet))
         {

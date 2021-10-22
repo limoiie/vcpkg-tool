@@ -232,7 +232,7 @@ namespace vcpkg::Export::Prefab
         const Triplet& triplet,
         Optional<bin2sth::CompileTriplet> compile_triplet)
     {
-        provider->load_generic_triplet_vars(triplet);
+        provider->load_generic_triplet_vars(triplet, compile_triplet);
         auto const& cmake_vars = provider->get_generic_triplet_vars(triplet).value_or_exit(VCPKG_LINE_INFO);
         return std::make_unique<Build::PreBuildInfo>(paths, triplet, compile_triplet, cmake_vars);
     }

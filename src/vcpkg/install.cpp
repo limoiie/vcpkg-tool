@@ -946,7 +946,7 @@ namespace vcpkg::Install
                 extended_overlay_ports.push_back(paths.builtin_ports_directory().native());
             }
             auto oprovider = PortFileProvider::make_overlay_provider(paths, extended_overlay_ports);
-            PackageSpec toplevel{manifest_scf.core_paragraph->name, default_triplet};
+            PackageSpec toplevel{manifest_scf.core_paragraph->name, default_triplet, default_compile_triplet};
             auto install_plan = Dependencies::create_versioned_install_plan(*verprovider,
                                                                             *baseprovider,
                                                                             *oprovider,

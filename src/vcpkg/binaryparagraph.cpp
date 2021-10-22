@@ -15,7 +15,7 @@ namespace vcpkg
         static const std::string PORT_VERSION = "Port-Version";
         static const std::string ARCHITECTURE = "Architecture";
         static const std::string MULTI_ARCH = "Multi-Arch";
-        static const std::string compile_triplet = "Compile-Triplet";
+        static const std::string COMPILE_TRIPLET = "Compile-Triplet";
     }
 
     namespace Fields
@@ -40,7 +40,7 @@ namespace vcpkg
         {
             auto name = parser.required_field(Fields::PACKAGE);
             auto architecture = parser.required_field(Fields::ARCHITECTURE);
-            auto compilation = parser.optional_field(Fields::compile_triplet);
+            auto compilation = parser.optional_field(Fields::COMPILE_TRIPLET);
 
             auto triple = Triplet::from_canonical_name(std::move(architecture));
             auto compile_triplet = bin2sth::CompileTriplet::from_canonical_name(std::move(compilation), triple);
@@ -83,6 +83,7 @@ namespace vcpkg
                     dep.name,
                     dep.triplet.map([](auto&& s) { return Triplet::from_canonical_name(std::string(s)); })
                         .value_or(my_triplet),
+                    nullopt  // TODO: do we need to put compile-triplet into Fields::DEPENDS?
                 };
             });
         if (!this->is_feature())
@@ -281,7 +282,7 @@ namespace vcpkg
 
         if (auto const* p_compile_triplet = pgh.spec.compile_triplet().get())
         {
-            serialize_string(Fields::compile_triplet, p_compile_triplet->to_string(), out_str);
+            serialize_string(Fields::COMPILE_TRIPLET, p_compile_triplet->to_string(), out_str);
         }
 
         serialize_paragraph(Fields::MAINTAINER, pgh.maintainers, out_str);

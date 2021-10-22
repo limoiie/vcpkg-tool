@@ -47,7 +47,7 @@ namespace vcpkg::Commands::Env
         auto var_provider_storage = CMakeVars::make_triplet_cmake_var_provider(paths);
         auto& var_provider = *var_provider_storage;
 
-        var_provider.load_generic_triplet_vars(triplet);
+        var_provider.load_generic_triplet_vars(triplet, compile_triplet);
 
         auto cmake_vars = var_provider.get_generic_triplet_vars(triplet).value_or_exit(VCPKG_LINE_INFO);
         const Build::PreBuildInfo pre_build_info(paths, triplet, compile_triplet, cmake_vars);
