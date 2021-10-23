@@ -910,7 +910,7 @@ namespace vcpkg::Build
         const auto timer = ElapsedTimer::create_started();
 
         auto command = vcpkg::make_cmake_cmd(
-            paths, paths.ports_cmake, get_cmake_build_args(args, paths, action), action.spec.compile_triplet());
+            paths, paths.ports_cmake, get_cmake_build_args(args, paths, action));
 
         const auto& env = paths.get_action_env(action.abi_info.value_or_exit(VCPKG_LINE_INFO));
 
@@ -1555,12 +1555,12 @@ namespace vcpkg::Build
                             "Unknown setting for VCPKG_BUILD_TYPE: %s. Valid settings are '', 'debug' and 'release'.",
                             variable_value);
 
-                    if (compile_triplet.has_value() && build_type != ConfigurationType::DEBUG)
+                    if (compile_triplet.has_value() && build_type != ConfigurationType::RELEASE)
                     {
-                        // We only compile in debug-mode in bin2sth mode because only in debug mode the optimization
-                        // is unsetted by default, which is convenient for us to customize the compilation flags.
-                        print2("Overwriting VCPKG_BUILD_TYPE as 'debug' because of the specified compile-triplet\n");
-                        build_type = ConfigurationType::DEBUG;
+                        // We only compile in release type in bin2sth mode since there are many packages that install
+                        // the whole packages only in the release type
+                        print2("Overwriting VCPKG_BUILD_TYPE as 'release' since in bin2sth mode...\n");
+                        build_type = ConfigurationType::RELEASE;
                     }
                     break;
                 case VcpkgTripletVar::ENV_PASSTHROUGH:

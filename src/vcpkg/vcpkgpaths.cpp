@@ -463,22 +463,13 @@ namespace vcpkg
 
     Path VcpkgPaths::installed_dir(const PackageSpec& spec) const
     {
-        return this->installed_dir(spec.compile_triplet(), spec.triplet());
-    }
-
-    Path VcpkgPaths::installed_dir(const Optional<bin2sth::CompileTriplet>& compile_triplet) const
-    {
-        if (auto const* p_compile_triplet = compile_triplet.get())
-        {
-            return this->m_installed / "bin2sth" / p_compile_triplet->canonical_name();
-        }
-        return this->m_installed;
+        return this->installed_root() / spec.qualifier();
     }
 
     Path VcpkgPaths::installed_dir(const Optional<bin2sth::CompileTriplet>& compile_triplet,
                                    const Triplet& triplet) const
     {
-        return this->installed_dir(compile_triplet) / triplet.canonical_name();
+        return this->installed_dir(PackageSpec("", triplet, compile_triplet));
     }
 
     bool VcpkgPaths::is_valid_triplet(Triplet t) const

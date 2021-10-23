@@ -18,7 +18,7 @@ namespace vcpkg
     void FeatureSpec::to_string(std::string& out) const
     {
         if (feature().empty()) return spec().to_string(out);
-        Strings::append(out, name(), '[', feature(), "]:", triplet());
+        Strings::append(out, name(), '[', feature(), "]:", spec().qualifier());
     }
 
     std::vector<FeatureSpec> FullPackageSpec::to_feature_specs(const std::vector<std::string>& default_features,
@@ -61,23 +61,16 @@ namespace vcpkg
         return feature_specs;
     }
 
-    ExpectedS<FullPackageSpec> FullPackageSpec::from_string(
-        const std::string& spec_as_string,
-        Triplet default_triplet,
-        const Optional<bin2sth::CompileTriplet>& default_compile_triplet)
+    ExpectedS<FullPackageSpec> FullPackageSpec::from_string(const std::string& spec_as_string,
+                                                            Triplet default_triplet,
+                                                            Optional<bin2sth::CompileTriplet> default_compile_triplet)
     {
         return parse_qualified_specifier(spec_as_string)
             .then([&](ParsedQualifiedSpecifier&& p) -> ExpectedS<FullPackageSpec> {
                 if (p.platform)
                     return "Error: platform specifier not allowed in this context: " + spec_as_string + "\n";
-                auto triplet = p.triplet ? Triplet::from_canonical_name(std::move(*p.triplet.get())) : default_triplet;
-                // TODO: support to specify compile_triplet config in %param spec_as_string?
-                auto compile_triplet = default_compile_triplet;
-                if (auto* p_compile_triplet = compile_triplet.get())
-                {
-                    p_compile_triplet->with_triplet(triplet);
-                }
-                return FullPackageSpec({p.name, triplet, std::move(compile_triplet)}, p.features.value_or({}));
+                auto qualifier = deserialize_qualifier(p).value_or({default_triplet, default_compile_triplet});
+                return FullPackageSpec({p.name, qualifier.first, std::move(qualifier.second)}, p.features.value_or({}));
             });
     }
 
@@ -96,15 +89,17 @@ namespace vcpkg
 
     Optional<bin2sth::CompileTriplet> const& PackageSpec::compile_triplet() const { return this->m_compile_triplet; }
 
-    std::string PackageSpec::dir() const
+    std::string PackageSpec::qualifier() const
     {
-        auto dir = Strings::format("%s_%s", this->m_name, this->m_triplet);
+        std::string qualifier_suffix = this->triplet().to_string();
         if (auto const p_compilation = this->m_compile_triplet.get())
         {
-            dir.append(SEP_TRIPLET_COMPILE_TRIPLET).append(p_compilation->to_string());
+            qualifier_suffix.append(SEP_TRIPLET_COMPILE_TRIPLET).append(p_compilation->to_string());
         }
-        return dir;
+        return qualifier_suffix;
     }
+
+    std::string PackageSpec::dir() const { return Strings::format("%s_%s", this->m_name, this->qualifier()); }
 
     std::string PackageSpec::to_string() const
     {
@@ -113,14 +108,7 @@ namespace vcpkg
         return dir;
     }
 
-    void PackageSpec::to_string(std::string& s) const
-    {
-        Strings::append(s, this->name(), ':', this->triplet());
-        if (auto const p_compilation = this->m_compile_triplet.get())
-        {
-            Strings::append(s, SEP_TRIPLET_COMPILE_TRIPLET, p_compilation->to_string());
-        }
-    }
+    void PackageSpec::to_string(std::string& s) const { Strings::append(s, this->name(), ':', this->qualifier()); }
 
     bool operator==(const PackageSpec& left, const PackageSpec& right)
     {
@@ -269,7 +257,8 @@ namespace vcpkg
             {
                 parser.next();
                 ret.compile_triplet = parser.match_zero_or_more(is_compile_triplet_char).to_string();
-                if (ret.compile_triplet.get()->empty()) {
+                if (ret.compile_triplet.get()->empty())
+                {
                     parser.add_error("expected compile-triplet name (must be lowercase, digits, '-', '_')");
                     return nullopt;
                 }
@@ -309,6 +298,19 @@ namespace vcpkg
         // there isn't a qualifier.
         parser.skip_tabs_spaces();
         return ret;
+    }
+
+    Optional<std::pair<Triplet, Optional<bin2sth::CompileTriplet>>> deserialize_qualifier(
+        const ParsedQualifiedSpecifier& p)
+    {
+        if (!p.triplet.has_value()) return nullopt;
+
+        auto triplet = Triplet::from_canonical_name(std::string(*p.triplet.get()));
+        auto compile_triplet =
+            (p.compile_triplet && !p.compile_triplet.get()->empty())
+                ? bin2sth::CompileTriplet::from_canonical_name(std::string(*p.compile_triplet.get()), triplet)
+                : nullopt;
+        return std::make_pair(std::move(triplet), std::move(compile_triplet));
     }
 
     bool operator==(const DependencyConstraint& lhs, const DependencyConstraint& rhs)

@@ -25,7 +25,7 @@ namespace vcpkg
     struct PackageSpec
     {
         PackageSpec() = default;
-        //PackageSpec(std::string name, Triplet triplet) : m_name(std::move(name)), m_triplet(triplet) { }
+        // PackageSpec(std::string name, Triplet triplet) : m_name(std::move(name)), m_triplet(triplet) { }
         PackageSpec(std::string name, Triplet triplet, const Optional<bin2sth::CompileTriplet>& compile_triplet)
             : m_name(std::move(name)), m_triplet(triplet), m_compile_triplet(std::move(compile_triplet))
         {
@@ -41,6 +41,7 @@ namespace vcpkg
 
         Optional<bin2sth::CompileTriplet> const& compile_triplet() const;
 
+        std::string qualifier() const;
         std::string dir() const;
 
         std::string to_string() const;
@@ -127,10 +128,9 @@ namespace vcpkg
         std::vector<FeatureSpec> to_feature_specs(const std::vector<std::string>& default_features,
                                                   const std::vector<std::string>& all_features) const;
 
-        static ExpectedS<FullPackageSpec> from_string(
-            const std::string& spec_as_string,
-            Triplet default_triplet,
-            const Optional<bin2sth::CompileTriplet>& compile_triplet = nullopt);
+        static ExpectedS<FullPackageSpec> from_string(const std::string& spec_as_string,
+                                                      Triplet default_triplet,
+                                                      Optional<bin2sth::CompileTriplet> compile_triplet = nullopt);
 
         bool operator==(const FullPackageSpec& o) const
         {
@@ -214,6 +214,8 @@ namespace vcpkg
     Optional<std::string> parse_package_name(Parse::ParserBase& parser);
     ExpectedS<ParsedQualifiedSpecifier> parse_qualified_specifier(StringView input);
     Optional<ParsedQualifiedSpecifier> parse_qualified_specifier(Parse::ParserBase& parser);
+    Optional<std::pair<Triplet, Optional<bin2sth::CompileTriplet>>> deserialize_qualifier(
+        const ParsedQualifiedSpecifier& p);
 }
 
 namespace std

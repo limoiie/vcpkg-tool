@@ -13,6 +13,5 @@ namespace vcpkg
 {
     Command make_cmake_cmd(const VcpkgPaths& paths,
                            const Path& cmake_script,
-                           std::vector<CMakeVariable>&& pass_variables,
-                           Optional<bin2sth::CompileTriplet> const& compile_triplet = nullopt);
+                           std::vector<CMakeVariable>&& pass_variables);
 }

@@ -80,17 +80,9 @@ namespace vcpkg
             parse_qualified_specifier_list(parser.optional_field(Fields::DEPENDS)).value_or_exit(VCPKG_LINE_INFO),
             [my_triplet, my_compile_triplet](const ParsedQualifiedSpecifier& dep) {
                 // when the qualification is the same as current spec's, it could be stripped out in serialization
-                auto const default_qualified = !dep.triplet.has_value() || dep.triplet.get()->empty();
-                auto triplet = dep.triplet.map([](auto&& s) { return Triplet::from_canonical_name(std::string(s)); })
-                                   .value_or(my_triplet);
-                auto compile_triplet =
-                    dep.compile_triplet
-                        .map([&triplet](auto&& s) {
-                            return bin2sth::CompileTriplet::from_canonical_name(std::string(s), triplet);
-                        })
-                        .value_or(default_qualified ? my_compile_triplet : nullopt);
+                auto qualifier = deserialize_qualifier(dep).value_or({my_triplet, my_compile_triplet});
                 // for compatibility with previous vcpkg versions, we discard all irrelevant information
-                return PackageSpec{dep.name, triplet, compile_triplet};
+                return PackageSpec{dep.name, qualifier.first, std::move(qualifier.second)};
             });
         if (!this->is_feature())
         {
@@ -182,23 +174,16 @@ namespace vcpkg
 
     std::string BinaryParagraph::displayname() const
     {
-        std::string compilation_msg;
-        if (auto const* compile_triplet = this->spec.compile_triplet().get())
-            compilation_msg.assign("_").append(compile_triplet->canonical_name());
-
         if (!this->is_feature() || this->feature == "core")
-            return Strings::format("%s:%s%s", this->spec.name(), this->spec.triplet(), compilation_msg);
-        return Strings::format("%s[%s]:%s%s", this->spec.name(), this->feature, this->spec.triplet(), compilation_msg);
+            return Strings::format("%s:%s", this->spec.name(), this->spec.qualifier());
+        return Strings::format("%s[%s]:%s", this->spec.name(), this->feature, this->spec.qualifier());
     }
 
     std::string BinaryParagraph::dir() const { return this->spec.dir(); }
 
     std::string BinaryParagraph::fullstem() const
     {
-        auto full_stem = Strings::format("%s_%s_%s", this->spec.name(), this->version, this->spec.triplet());
-        if (auto const* compile_triplet = this->spec.compile_triplet().get())
-            full_stem.append("_").append(compile_triplet->canonical_name());
-        return full_stem;
+        return Strings::format("%s_%s_%s", this->spec.name(), this->version, this->spec.qualifier());
     }
 
     bool operator==(const BinaryParagraph& lhs, const BinaryParagraph& rhs)
@@ -247,10 +232,10 @@ namespace vcpkg
         serialize_array(name, array, out_str, "\n    ");
     }
 
-    static std::string serialize_deps_list(View<PackageSpec> deps, Triplet target)
+    static std::string serialize_deps_list(View<PackageSpec> deps, std::string qualifier)
     {
-        return Strings::join(", ", deps, [target](const PackageSpec& pspec) {
-            if (pspec.triplet() == target)
+        return Strings::join(", ", deps, [qualifier](const PackageSpec& pspec) {
+            if (pspec.qualifier() == qualifier)
             {
                 return pspec.name();
             }
@@ -280,7 +265,7 @@ namespace vcpkg
 
         if (!pgh.dependencies.empty())
         {
-            serialize_string(Fields::DEPENDS, serialize_deps_list(pgh.dependencies, pgh.spec.triplet()), out_str);
+            serialize_string(Fields::DEPENDS, serialize_deps_list(pgh.dependencies, pgh.spec.qualifier()), out_str);
         }
 
         serialize_string(Fields::ARCHITECTURE, pgh.spec.triplet().to_string(), out_str);

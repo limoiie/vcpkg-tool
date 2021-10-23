@@ -287,7 +287,7 @@ namespace vcpkg::Install
         }
 
         const InstallDir install_dir = InstallDir::from_destination_root(
-            paths.installed_dir(compile_triplet), triplet.to_string(), paths.listfile_path(bcf.core_paragraph));
+            paths.installed_root(), bcf.core_paragraph.spec.qualifier(), paths.listfile_path(bcf.core_paragraph));
 
         install_package_and_write_listfile(paths, bcf.core_paragraph.spec, install_dir);
 
@@ -652,7 +652,7 @@ namespace vcpkg::Install
                 if (Strings::contains(suffix, "/share/") && Strings::ends_with(suffix, ".cmake"))
                 {
                     // CMake file is inside the share folder
-                    const auto path = paths.installed_dir(bpgh.spec.compile_triplet()) / suffix;
+                    const auto path = paths.installed_root() / suffix;
                     const auto contents = fs.read_contents(path, ec);
                     const auto find_package_name = Path(path.parent_path()).filename().to_string();
                     if (!ec)

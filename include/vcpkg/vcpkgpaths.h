@@ -88,7 +88,6 @@ namespace vcpkg
 
         Path const& installed_root() const { return m_installed; }
         Path installed_dir(const PackageSpec& spec) const;
-        Path installed_dir(const Optional<bin2sth::CompileTriplet>& compile_triplet) const;
         Path installed_dir(const Optional<bin2sth::CompileTriplet>& compile_triplet, const Triplet& triplet) const;
 
         bool is_valid_triplet(Triplet t) const;

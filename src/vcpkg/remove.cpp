@@ -46,16 +46,10 @@ namespace vcpkg::Remove
         auto lines = fs.read_lines(paths.listfile_path(ipv.core->package), ec);
         if (!ec)
         {
-            auto const installed = paths.installed_dir(spec.compile_triplet());
-
             std::vector<Path> dirs_touched;
-            if (spec.compile_triplet().has_value()) {
-                dirs_touched.push_back(installed);
-            }
-
             for (auto&& suffix : lines)
             {
-                auto target = installed / suffix;
+                auto target = paths.installed_root() / suffix;
 
                 const auto status = fs.symlink_status(target, ec);
                 if (ec)
