@@ -472,7 +472,11 @@ namespace vcpkg::Commands::CI
         return result;
     }
 
-    void perform_and_exit(const VcpkgCmdArguments& args, const VcpkgPaths& paths, Triplet, Triplet host_triplet)
+    void perform_and_exit(const VcpkgCmdArguments& args,
+                          const VcpkgPaths& paths,
+                          Triplet,
+                          Triplet host_triplet,
+                          Optional<bin2sth::CompileTriplet>&& compile_triplet)
     {
         vcpkg::print2(Color::warning,
                       "'vcpkg ci' is an internal command which will change incompatibly or be removed at any time.\n");
@@ -525,7 +529,7 @@ namespace vcpkg::Commands::CI
 
         xunitTestResults.push_collection(target_triplet.canonical_name());
 
-        std::vector<PackageSpec> specs = PackageSpec::to_package_specs(all_ports, target_triplet);
+        std::vector<PackageSpec> specs = PackageSpec::to_package_specs(all_ports, target_triplet, compile_triplet);
         // Install the default features for every package
         auto all_default_full_specs = Util::fmap(specs, [&](auto& spec) {
             std::vector<std::string> default_features =
@@ -689,8 +693,9 @@ namespace vcpkg::Commands::CI
     void CICommand::perform_and_exit(const VcpkgCmdArguments& args,
                                      const VcpkgPaths& paths,
                                      Triplet default_triplet,
-                                     Triplet host_triplet) const
+                                     Triplet host_triplet,
+                                     Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        CI::perform_and_exit(args, paths, default_triplet, host_triplet);
+        CI::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 }

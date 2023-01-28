@@ -227,16 +227,29 @@ namespace vcpkg::Export::Prefab
     }
 
     static std::unique_ptr<Build::PreBuildInfo> build_info_from_triplet(
-        const VcpkgPaths& paths, const std::unique_ptr<CMakeVars::CMakeVarProvider>& provider, const Triplet& triplet)
+        const VcpkgPaths& paths,
+        const std::unique_ptr<CMakeVars::CMakeVarProvider>& provider,
+        const Triplet& triplet,
+        Optional<bin2sth::CompileTriplet> compile_triplet)
     {
-        provider->load_generic_triplet_vars(triplet);
-        return std::make_unique<Build::PreBuildInfo>(
-            paths, triplet, provider->get_generic_triplet_vars(triplet).value_or_exit(VCPKG_LINE_INFO));
+        provider->load_generic_triplet_vars(triplet, compile_triplet);
+        auto const& cmake_vars = provider->get_generic_triplet_vars(triplet).value_or_exit(VCPKG_LINE_INFO);
+        return std::make_unique<Build::PreBuildInfo>(paths, triplet, compile_triplet, cmake_vars);
     }
 
     static bool is_supported(const Build::PreBuildInfo& info)
     {
         return Strings::case_insensitive_ascii_equals(info.cmake_system_name, "android");
+    }
+
+    static const Optional<bin2sth::CompileTriplet>& guess_default_compile_triplet(
+        const std::vector<ExportPlanAction>& export_plan, const Optional<bin2sth::CompileTriplet>& default_opt)
+    {
+        for (auto const& action : export_plan)
+        {
+            if (action.spec.compile_triplet().has_value()) return action.spec.compile_triplet();
+        }
+        return default_opt;
     }
 
     void do_export(const std::vector<ExportPlanAction>& export_plan,
@@ -245,9 +258,9 @@ namespace vcpkg::Export::Prefab
                    const Triplet& default_triplet)
     {
         auto provider = CMakeVars::make_triplet_cmake_var_provider(paths);
-
+        auto const& default_compile_triplet = guess_default_compile_triplet(export_plan, nullopt);
         {
-            auto build_info = build_info_from_triplet(paths, provider, default_triplet);
+            auto build_info = build_info_from_triplet(paths, provider, default_triplet, default_compile_triplet);
             Checks::check_maybe_upgrade(
                 VCPKG_LINE_INFO, is_supported(*build_info), "Currenty supported on android triplets");
         }
@@ -273,7 +286,7 @@ namespace vcpkg::Export::Prefab
             if (triplet_file.name.size() > 0)
             {
                 Triplet triplet = Triplet::from_canonical_name(std::move(triplet_file.name));
-                auto triplet_build_info = build_info_from_triplet(paths, provider, triplet);
+                auto triplet_build_info = build_info_from_triplet(paths, provider, triplet, default_compile_triplet);
                 if (is_supported(*triplet_build_info))
                 {
                     auto cpu_architecture =

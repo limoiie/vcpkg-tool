@@ -84,9 +84,11 @@ namespace vcpkg::Build
     void Command::perform_and_exit(const VcpkgCmdArguments& args,
                                    const VcpkgPaths& paths,
                                    Triplet default_triplet,
-                                   Triplet host_triplet)
+                                   Triplet host_triplet,
+                                   Optional<bin2sth::CompileTriplet>&& default_compile_triplet)
     {
-        Checks::exit_with_code(VCPKG_LINE_INFO, perform(args, paths, default_triplet, host_triplet));
+        Checks::exit_with_code(VCPKG_LINE_INFO,
+                               perform(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet)));
     }
 
     int Command::perform_ex(const VcpkgCmdArguments& args,
@@ -175,7 +177,8 @@ namespace vcpkg::Build
     int Command::perform(const VcpkgCmdArguments& args,
                          const VcpkgPaths& paths,
                          Triplet default_triplet,
-                         Triplet host_triplet)
+                         Triplet host_triplet,
+                         Optional<bin2sth::CompileTriplet>&& default_compile_triplet)
     {
         // Build only takes a single package and all dependencies must already be installed
         const ParsedArguments options = args.parse_arguments(COMMAND_STRUCTURE);
@@ -183,7 +186,7 @@ namespace vcpkg::Build
 
         BinaryCache binary_cache{args};
         const FullPackageSpec spec = Input::check_and_get_full_package_spec(
-            std::move(first_arg), default_triplet, COMMAND_STRUCTURE.example_text);
+            std::move(first_arg), default_triplet, default_compile_triplet, COMMAND_STRUCTURE.example_text);
 
         Input::check_triplet(spec.package_spec.triplet(), paths);
 
@@ -201,9 +204,11 @@ namespace vcpkg::Build
     void BuildCommand::perform_and_exit(const VcpkgCmdArguments& args,
                                         const VcpkgPaths& paths,
                                         Triplet default_triplet,
-                                        Triplet host_triplet) const
+                                        Triplet host_triplet,
+                                        Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        Build::Command::perform_and_exit(args, paths, default_triplet, host_triplet);
+        Build::Command::perform_and_exit(
+            args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 }
 
@@ -590,12 +595,13 @@ namespace vcpkg::Build
     static std::unique_ptr<BinaryControlFile> create_binary_control_file(
         const SourceParagraph& source_paragraph,
         Triplet triplet,
+        Optional<bin2sth::CompileTriplet>&& compile_triplet,
         const BuildInfo& build_info,
         const std::string& abi_tag,
         const std::vector<FeatureSpec>& core_dependencies)
     {
         auto bcf = std::make_unique<BinaryControlFile>();
-        BinaryParagraph bpgh(source_paragraph, triplet, abi_tag, core_dependencies);
+        BinaryParagraph bpgh(source_paragraph, triplet, std::move(compile_triplet), abi_tag, core_dependencies);
         if (const auto p_ver = build_info.version.get())
         {
             bpgh.version = *p_ver;
@@ -973,11 +979,13 @@ namespace vcpkg::Build
         auto find_itr = action.feature_dependencies.find("core");
         Checks::check_exit(VCPKG_LINE_INFO, find_itr != action.feature_dependencies.end());
 
-        std::unique_ptr<BinaryControlFile> bcf = create_binary_control_file(*scfl.source_control_file->core_paragraph,
-                                                                            triplet,
-                                                                            build_info,
-                                                                            action.public_abi(),
-                                                                            std::move(find_itr->second));
+        std::unique_ptr<BinaryControlFile> bcf =
+            create_binary_control_file(*scfl.source_control_file->core_paragraph,
+                                       triplet,
+                                       Optional<bin2sth::CompileTriplet>(action.spec.compile_triplet()),
+                                       build_info,
+                                       action.public_abi(),
+                                       std::move(find_itr->second));
 
         if (error_count != 0 && action.build_options.backcompat_features == BackcompatFeatures::PROHIBIT)
         {
@@ -993,8 +1001,11 @@ namespace vcpkg::Build
                     find_itr = action.feature_dependencies.find(feature);
                     Checks::check_exit(VCPKG_LINE_INFO, find_itr != action.feature_dependencies.end());
 
-                    bcf->features.emplace_back(
-                        *scfl.source_control_file->core_paragraph, *f_pgh, triplet, std::move(find_itr->second));
+                    bcf->features.emplace_back(*scfl.source_control_file->core_paragraph,
+                                               *f_pgh,
+                                               triplet,
+                                               Optional<bin2sth::CompileTriplet>(action.spec.compile_triplet()),
+                                               std::move(find_itr->second));
                 }
             }
         }
@@ -1087,6 +1098,9 @@ namespace vcpkg::Build
         const auto& triplet_abi = paths.get_triplet_info(abi_info);
         abi_tag_entries.emplace_back("triplet", triplet.canonical_name());
         abi_tag_entries.emplace_back("triplet_abi", triplet_abi);
+        if (auto const* p_compile_triplet = action.spec.compile_triplet().get())
+            abi_tag_entries.emplace_back("compile_triplet", p_compile_triplet->canonical_name());
+        // TODO: generate compilation_abi from the interpreted compile_triplet?
         abi_entries_from_abi_info(abi_info, abi_tag_entries);
 
         // If there is an unusually large number of files in the port then
@@ -1211,9 +1225,9 @@ namespace vcpkg::Build
 
             action.abi_info = AbiInfo();
             auto& abi_info = action.abi_info.value_or_exit(VCPKG_LINE_INFO);
-
-            abi_info.pre_build_info = std::make_unique<PreBuildInfo>(
-                paths, action.spec.triplet(), var_provider.get_tag_vars(action.spec).value_or_exit(VCPKG_LINE_INFO));
+            auto const& cmake_vars = var_provider.get_tag_vars(action.spec).value_or_exit(VCPKG_LINE_INFO);
+            abi_info.pre_build_info =
+                std::make_unique<PreBuildInfo>(paths, action.spec.triplet(), action.spec.compile_triplet(), cmake_vars);
             abi_info.toolset = paths.get_toolset(*abi_info.pre_build_info);
 
             auto maybe_abi_tag_and_file = compute_abi_tag(paths, action, dependency_abis);
@@ -1468,8 +1482,9 @@ namespace vcpkg::Build
 
     PreBuildInfo::PreBuildInfo(const VcpkgPaths& paths,
                                Triplet triplet,
+                               const Optional<bin2sth::CompileTriplet>& compile_triplet,
                                const std::unordered_map<std::string, std::string>& cmakevars)
-        : triplet(triplet), m_paths(paths)
+        : triplet(triplet), compile_triplet(compile_triplet), m_paths(paths)
     {
         enum class VcpkgTripletVar
         {
@@ -1544,6 +1559,14 @@ namespace vcpkg::Build
                             VCPKG_LINE_INFO,
                             "Unknown setting for VCPKG_BUILD_TYPE: %s. Valid settings are '', 'debug' and 'release'.",
                             variable_value);
+
+                    if (compile_triplet.has_value() && build_type != ConfigurationType::RELEASE)
+                    {
+                        // We only compile in release type in bin2sth mode since there are many packages that install
+                        // the whole packages only in the release type
+                        print2("Overwriting VCPKG_BUILD_TYPE as 'release' since in bin2sth mode...\n");
+                        build_type = ConfigurationType::RELEASE;
+                    }
                     break;
                 case VcpkgTripletVar::ENV_PASSTHROUGH:
                     passthrough_env_vars_tracked = Strings::split(variable_value, ';');

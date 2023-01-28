@@ -195,8 +195,10 @@ namespace vcpkg
         return Util::fmap(ipv_map, [](auto&& p) -> InstalledPackageView { return std::move(p.second); });
     }
 
-    std::vector<StatusParagraphAndAssociatedFiles> get_installed_files(const VcpkgPaths& paths,
-                                                                       const StatusParagraphs& status_db)
+    std::vector<StatusParagraphAndAssociatedFiles> get_installed_files(
+        const VcpkgPaths& paths,
+        const StatusParagraphs& status_db,
+        const Optional<bin2sth::CompileTriplet>& compile_triplet)
     {
         auto& fs = paths.get_filesystem();
 
@@ -204,7 +206,8 @@ namespace vcpkg
 
         for (const std::unique_ptr<StatusParagraph>& pgh : status_db)
         {
-            if (!pgh->is_installed() || pgh->package.is_feature())
+            if (!pgh->is_installed() || pgh->package.is_feature() ||
+                pgh->package.spec.compile_triplet() != compile_triplet)
             {
                 continue;
             }

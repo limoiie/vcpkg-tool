@@ -10,6 +10,7 @@
 #include <vcpkg/commands.contact.h>
 #include <vcpkg/commands.h>
 #include <vcpkg/commands.version.h>
+#include <vcpkg/compilation-flags-factory.h>
 #include <vcpkg/globalstate.h>
 #include <vcpkg/help.h>
 #include <vcpkg/input.h>
@@ -115,10 +116,16 @@ static void inner(vcpkg::Filesystem& fs, const VcpkgCmdArguments& args)
     Input::check_triplet(default_triplet, paths);
     Triplet host_triplet = vcpkg::default_host_triplet(args);
     Input::check_triplet(host_triplet, paths);
+    Optional<bin2sth::CompileTriplet> default_compile_triplet =
+        vcpkg::bin2sth::default_compile_triplet(args, default_triplet);
+    // TODO: also check default_compile_triplet?
+    //   verify if the compiler supports obfuscation or not
+    //   verify if the compiler is good with the target architecture
 
     if (const auto command_function = find_command(Commands::get_available_triplet_commands()))
     {
-        return command_function->function->perform_and_exit(args, paths, default_triplet, host_triplet);
+        return command_function->function->perform_and_exit(
+            args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 
     return invalid_command(args.command);
