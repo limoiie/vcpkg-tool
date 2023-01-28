@@ -41,6 +41,7 @@ namespace vcpkg
 
         Optional<bin2sth::CompileTriplet> const& compile_triplet() const;
 
+        std::string qualifier() const;
         std::string dir() const;
 
         std::string to_string() const;
@@ -213,6 +214,8 @@ namespace vcpkg
     Optional<std::string> parse_package_name(Parse::ParserBase& parser);
     ExpectedS<ParsedQualifiedSpecifier> parse_qualified_specifier(StringView input);
     Optional<ParsedQualifiedSpecifier> parse_qualified_specifier(Parse::ParserBase& parser);
+    Optional<std::pair<Triplet, Optional<bin2sth::CompileTriplet>>> deserialize_qualifier(
+        const ParsedQualifiedSpecifier& p);
 }
 
 namespace std

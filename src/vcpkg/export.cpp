@@ -533,7 +533,7 @@ namespace vcpkg::Export
             const BinaryParagraph& binary_paragraph = action.core_paragraph().value_or_exit(VCPKG_LINE_INFO);
 
             const InstallDir dirs = InstallDir::from_destination_root(raw_exported_dir_path / "installed",
-                                                                      action.spec.triplet().to_string(),
+                                                                      action.spec.qualifier(),
                                                                       raw_exported_dir_path / "installed/vcpkg/info" /
                                                                           (binary_paragraph.fullstem() + ".list"));
 
@@ -543,7 +543,7 @@ namespace vcpkg::Export
             {
                 if (suffix.empty()) continue;
                 if (suffix.back() == '/') suffix.pop_back();
-                if (suffix == action.spec.triplet().to_string()) continue;
+                if (suffix == action.spec.qualifier()) continue;
                 files.push_back(paths.installed / suffix);
             }
 
