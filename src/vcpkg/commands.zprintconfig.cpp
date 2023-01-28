@@ -30,12 +30,17 @@ namespace vcpkg::Commands::Z_PrintConfig
     void PrintConfigCommand::perform_and_exit(const VcpkgCmdArguments&,
                                               const VcpkgPaths& paths,
                                               Triplet default_triplet,
-                                              Triplet host_triplet) const
+                                              Triplet host_triplet,
+                                              Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
         Json::Object obj;
         obj.insert("downloads", paths.downloads.native());
         obj.insert("default_triplet", default_triplet.canonical_name());
         obj.insert("host_triplet", host_triplet.canonical_name());
+        if (auto const *p_default_compile_triplet = default_compile_triplet.get())
+        {
+            obj.insert("default_compile_triplet", p_default_compile_triplet->canonical_name());
+        }
         obj.insert("vcpkg_root", paths.root.native());
         obj.insert("tools", paths.tools.native());
         if (auto i = paths.maybe_installed().get())

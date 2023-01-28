@@ -473,7 +473,11 @@ namespace vcpkg::Commands::CI
         return result;
     }
 
-    void perform_and_exit(const VcpkgCmdArguments& args, const VcpkgPaths& paths, Triplet, Triplet host_triplet)
+    void perform_and_exit(const VcpkgCmdArguments& args,
+                          const VcpkgPaths& paths,
+                          Triplet,
+                          Triplet host_triplet,
+                          Optional<bin2sth::CompileTriplet>&& compile_triplet)
     {
         vcpkg::print2(Color::warning,
                       "'vcpkg ci' is an internal command which will change incompatibly or be removed at any time.\n");
@@ -531,7 +535,7 @@ namespace vcpkg::Commands::CI
         all_default_full_specs.reserve(all_port_names.size());
         for (auto&& port_name : all_port_names)
         {
-            all_default_full_specs.emplace_back(PackageSpec{std::move(port_name), target_triplet},
+            all_default_full_specs.emplace_back(PackageSpec{std::move(port_name), target_triplet, compile_triplet},
                                                 InternalFeatureSet{"core", "default"});
         }
 
@@ -690,8 +694,9 @@ namespace vcpkg::Commands::CI
     void CICommand::perform_and_exit(const VcpkgCmdArguments& args,
                                      const VcpkgPaths& paths,
                                      Triplet default_triplet,
-                                     Triplet host_triplet) const
+                                     Triplet host_triplet,
+                                     Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        CI::perform_and_exit(args, paths, default_triplet, host_triplet);
+        CI::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 }

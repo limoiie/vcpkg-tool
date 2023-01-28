@@ -11,6 +11,7 @@ namespace vcpkg
 {
     PackageSpec Input::check_and_get_package_spec(std::string&& spec_string,
                                                   Triplet default_triplet,
+                                                  Optional<bin2sth::CompileTriplet> const& default_compile_triplet,
                                                   CStringView example_text,
                                                   const VcpkgPaths& paths)
     {
@@ -42,14 +43,19 @@ namespace vcpkg
         }
     }
 
-    FullPackageSpec Input::check_and_get_full_package_spec(std::string&& full_package_spec_as_string,
-                                                           Triplet default_triplet,
-                                                           CStringView example_text,
-                                                           const VcpkgPaths& paths)
+    FullPackageSpec Input::check_and_get_full_package_spec(
+        std::string&& full_package_spec_as_string,
+        Triplet default_triplet,
+        Optional<bin2sth::CompileTriplet> const& default_compile_triplet,
+        CStringView example_text,
+        const VcpkgPaths& paths)
     {
         const std::string as_lowercase = Strings::ascii_to_lowercase(std::move(full_package_spec_as_string));
         auto expected_spec = parse_qualified_specifier(as_lowercase)
-                                 .then(&ParsedQualifiedSpecifier::to_full_spec, default_triplet, ImplicitDefault::YES);
+                                 .then(&ParsedQualifiedSpecifier::to_full_spec,
+                                       default_triplet,
+                                       default_compile_triplet,
+                                       ImplicitDefault::YES);
         if (const auto spec = expected_spec.get())
         {
             Input::check_triplet(spec->package_spec.triplet(), paths);
