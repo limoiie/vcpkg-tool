@@ -32,6 +32,7 @@
 #include <vcpkg/commands.porthistory.h>
 #include <vcpkg/commands.portsdiff.h>
 #include <vcpkg/commands.regenerate.h>
+#include <vcpkg/commands.register-compiler.h>
 #include <vcpkg/commands.search.h>
 #include <vcpkg/commands.setinstalled.h>
 #include <vcpkg/commands.upgrade.h>
@@ -98,6 +99,7 @@ namespace vcpkg::Commands
         static const Integrate::IntegrateCommand integrate{};
         static const List::ListCommand list{};
         static const ListCompilers::ListCompilersCommand list_compilers{};
+        static const RegisterCompiler::RegisterCompilerCommand register_compiler{};
         static const NewCommand new_{};
         static const Owns::OwnsCommand owns{};
         static const PortHistory::PortHistoryCommand porthistory{};
@@ -124,6 +126,7 @@ namespace vcpkg::Commands
             {"integrate", &integrate},
             {"list", &list},
             {"list-compilers", &list_compilers},
+            {"register-compiler", &register_compiler},
             {"integrate", &integrate},
             {"new", &new_},
             {"owns", &owns},
