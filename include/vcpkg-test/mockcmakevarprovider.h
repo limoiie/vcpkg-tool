@@ -7,7 +7,7 @@ namespace vcpkg::Test
     struct MockCMakeVarProvider final : CMakeVars::CMakeVarProvider
     {
         using SMap = std::unordered_map<std::string, std::string>;
-        void load_generic_triplet_vars(Triplet triplet) const override
+        void load_generic_triplet_vars(Triplet triplet, Optional<bin2sth::CompileTriplet>) const override
         {
             generic_triplet_vars.emplace(triplet, SMap{});
         }
