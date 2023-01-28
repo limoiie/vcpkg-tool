@@ -21,6 +21,7 @@ namespace vcpkg
                                                      Triplet t,
                                                      Triplet host,
                                                      const std::unordered_map<std::string, std::string>& cmake_vars,
+                                                     Optional<bin2sth::CompileTriplet> compile_triplet,
                                                      ImplicitDefault id);
 
     struct Type

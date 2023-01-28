@@ -15,6 +15,7 @@ namespace vcpkg
         static const std::string PORT_VERSION = "Port-Version";
         static const std::string ARCHITECTURE = "Architecture";
         static const std::string MULTI_ARCH = "Multi-Arch";
+        static const std::string COMPILE_TRIPLET = "Compile-Triplet";
     }
 
     namespace Fields
@@ -37,11 +38,13 @@ namespace vcpkg
         ParagraphParser parser(std::move(fields));
 
         {
-            std::string name;
-            parser.required_field(Fields::PACKAGE, name);
-            std::string architecture;
-            parser.required_field(Fields::ARCHITECTURE, architecture);
-            this->spec = PackageSpec(std::move(name), Triplet::from_canonical_name(std::move(architecture)));
+            auto name = parser.required_field(Fields::PACKAGE);
+            auto architecture = parser.required_field(Fields::ARCHITECTURE);
+            auto compilation = parser.optional_field(Fields::COMPILE_TRIPLET);
+
+            auto triple = Triplet::from_canonical_name(std::move(architecture));
+            auto compile_triplet = bin2sth::CompileTriplet::from_canonical_name(std::move(compilation));
+            this->spec = PackageSpec(std::move(name), triple, std::move(compile_triplet));
         }
 
         // one or the other
@@ -105,9 +108,10 @@ namespace vcpkg
 
     BinaryParagraph::BinaryParagraph(const SourceParagraph& spgh,
                                      Triplet triplet,
+                                     Optional<bin2sth::CompileTriplet>&& compile_triplet,
                                      const std::string& abi_tag,
                                      const std::vector<FeatureSpec>& deps)
-        : spec(spgh.name, triplet)
+        : spec(spgh.name, triplet, std::move(compile_triplet))
         , version(spgh.raw_version)
         , port_version(spgh.port_version)
         , description(spgh.description)
@@ -125,8 +129,9 @@ namespace vcpkg
     BinaryParagraph::BinaryParagraph(const SourceParagraph& spgh,
                                      const FeatureParagraph& fpgh,
                                      Triplet triplet,
+                                     Optional<bin2sth::CompileTriplet>&& compile_triplet,
                                      const std ::vector<FeatureSpec>& deps)
-        : spec(spgh.name, triplet)
+        : spec(spgh.name, triplet, std::move(compile_triplet))
         , version()
         , port_version()
         , description(fpgh.description)
@@ -266,6 +271,11 @@ namespace vcpkg
 
         serialize_string(Fields::ARCHITECTURE, pgh.spec.triplet().to_string(), out_str);
         serialize_string(Fields::MULTI_ARCH, "same", out_str);
+
+        if (auto const* p_compile_triplet = pgh.spec.compile_triplet().get())
+        {
+            serialize_string(Fields::COMPILE_TRIPLET, p_compile_triplet->to_string(), out_str);
+        }
 
         serialize_paragraph(Fields::MAINTAINER, pgh.maintainers, out_str);
 

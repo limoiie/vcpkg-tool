@@ -202,8 +202,9 @@ namespace vcpkg::Install
         const auto& installed = paths.installed();
         const auto package_dir = paths.package_dir(bcf.core_paragraph.spec);
         Triplet triplet = bcf.core_paragraph.spec.triplet();
+        Optional<bin2sth::CompileTriplet> compile_triplet = bcf.core_paragraph.spec.compile_triplet();
         const std::vector<StatusParagraphAndAssociatedFiles> pgh_and_files =
-            get_installed_files(fs, installed, *status_db);
+            get_installed_files(fs, installed, *status_db, compile_triplet);
 
         const SortedVector<std::string> package_files = build_list_of_package_files(fs, package_dir);
         const SortedVector<file_pack> installed_files = build_list_of_installed_files(pgh_and_files, triplet);
