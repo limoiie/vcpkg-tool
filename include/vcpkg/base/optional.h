@@ -436,4 +436,18 @@ namespace vcpkg
         if (auto p = o.get()) return t != *p;
         return true;
     }
+    template<class T>
+    bool operator==(const Optional<T>& t, const Optional<T>& o)
+    {
+        if (t.has_value() != o.has_value()) return false;
+        if (t.has_value()) return *t.get() == *o.get();
+        return true;
+    }
+    template<class T>
+    bool operator!=(const Optional<T>& t, const Optional<T>& o)
+    {
+        if (t.has_value() != o.has_value()) return true;
+        if (t.has_value()) return *t.get() != *o.get();
+        return false;
+    }
 }

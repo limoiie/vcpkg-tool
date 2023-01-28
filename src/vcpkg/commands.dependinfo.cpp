@@ -299,7 +299,8 @@ namespace vcpkg::Commands::DependInfo
     void perform_and_exit(const VcpkgCmdArguments& args,
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
-                          Triplet host_triplet)
+                          Triplet host_triplet,
+                          Optional<bin2sth::CompileTriplet>&& default_compile_triplet)
     {
         const ParsedArguments options = args.parse_arguments(COMMAND_STRUCTURE);
         const int max_depth = get_max_depth(options);
@@ -308,7 +309,7 @@ namespace vcpkg::Commands::DependInfo
 
         const std::vector<FullPackageSpec> specs = Util::fmap(args.command_arguments, [&](auto&& arg) {
             return Input::check_and_get_full_package_spec(
-                std::string{arg}, default_triplet, COMMAND_STRUCTURE.example_text, paths);
+                std::string{arg}, default_triplet, default_compile_triplet, COMMAND_STRUCTURE.example_text, paths);
         });
 
         PathsPortFileProvider provider(paths, args.overlay_ports);
@@ -418,8 +419,9 @@ namespace vcpkg::Commands::DependInfo
     void DependInfoCommand::perform_and_exit(const VcpkgCmdArguments& args,
                                              const VcpkgPaths& paths,
                                              Triplet default_triplet,
-                                             Triplet host_triplet) const
+                                             Triplet host_triplet,
+                                             Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        DependInfo::perform_and_exit(args, paths, default_triplet, host_triplet);
+        DependInfo::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 }

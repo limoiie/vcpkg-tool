@@ -20,14 +20,17 @@ namespace vcpkg::Commands::BuildExternal
     void perform_and_exit(const VcpkgCmdArguments& args,
                           const VcpkgPaths& paths,
                           Triplet default_triplet,
-                          Triplet host_triplet)
+                          Triplet host_triplet,
+                          Optional<bin2sth::CompileTriplet>&& default_compile_triplet)
     {
         const ParsedArguments options = args.parse_arguments(COMMAND_STRUCTURE);
 
         BinaryCache binary_cache{args, paths};
 
-        const FullPackageSpec spec = Input::check_and_get_full_package_spec(
-            std::string(args.command_arguments.at(0)), default_triplet, COMMAND_STRUCTURE.example_text, paths);
+        const FullPackageSpec spec = Input::check_and_get_full_package_spec(std::string(args.command_arguments.at(0)),
+                                                                            default_triplet,
+                                                                            default_compile_triplet,
+                                                                            COMMAND_STRUCTURE.example_text, paths);
 
         auto overlays = args.overlay_ports;
         overlays.insert(overlays.begin(), args.command_arguments.at(1));
@@ -51,8 +54,9 @@ namespace vcpkg::Commands::BuildExternal
     void BuildExternalCommand::perform_and_exit(const VcpkgCmdArguments& args,
                                                 const VcpkgPaths& paths,
                                                 Triplet default_triplet,
-                                                Triplet host_triplet) const
+                                                Triplet host_triplet,
+                                                Optional<bin2sth::CompileTriplet>&& default_compile_triplet) const
     {
-        BuildExternal::perform_and_exit(args, paths, default_triplet, host_triplet);
+        BuildExternal::perform_and_exit(args, paths, default_triplet, host_triplet, std::move(default_compile_triplet));
     }
 }
