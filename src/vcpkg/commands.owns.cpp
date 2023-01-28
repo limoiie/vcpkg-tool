@@ -13,7 +13,7 @@ namespace vcpkg::Commands::Owns
                             const std::string& file_substr,
                             const StatusParagraphs& status_db)
     {
-        const auto installed_files = get_installed_files(fs, installed, status_db);
+        const auto installed_files = get_installed_files(fs, installed, status_db, nullopt);
         for (auto&& pgh_and_file : installed_files)
         {
             const StatusParagraph& pgh = pgh_and_file.pgh;

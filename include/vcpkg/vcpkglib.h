@@ -21,9 +21,11 @@ namespace vcpkg
     };
 
     std::vector<InstalledPackageView> get_installed_ports(const StatusParagraphs& status_db);
-    std::vector<StatusParagraphAndAssociatedFiles> get_installed_files(Filesystem& fs,
-                                                                       const InstalledPaths& installed,
-                                                                       const StatusParagraphs& status_db);
+    std::vector<StatusParagraphAndAssociatedFiles> get_installed_files(
+        Filesystem& fs,
+        const InstalledPaths& installed,
+        const StatusParagraphs& status_db,
+        const Optional<bin2sth::CompileTriplet>& compile_triplet);
 
     std::string shorten_text(const std::string& desc, const size_t length);
 } // namespace vcpkg

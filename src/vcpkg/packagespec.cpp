@@ -8,6 +8,8 @@
 
 namespace vcpkg
 {
+    static constexpr StringLiteral SEP_TRIPLET_COMPILE_TRIPLET = "_";
+
     std::string FeatureSpec::to_string() const
     {
         std::string ret;
@@ -30,6 +32,8 @@ namespace vcpkg
 
     const std::string& PackageSpec::name() const { return this->m_name; }
 
+    Optional<bin2sth::CompileTriplet> const& PackageSpec::compile_triplet() const { return this->m_compile_triplet; }
+
     Triplet PackageSpec::triplet() const { return this->m_triplet; }
 
     std::string PackageSpec::dir() const { return Strings::format("%s_%s", this->m_name, this->m_triplet); }
@@ -39,7 +43,8 @@ namespace vcpkg
 
     bool operator==(const PackageSpec& left, const PackageSpec& right)
     {
-        return left.name() == right.name() && left.triplet() == right.triplet();
+        return left.name() == right.name() && left.triplet() == right.triplet() &&
+               left.compile_triplet() == right.compile_triplet();
     }
 
     DECLARE_AND_REGISTER_MESSAGE(IllegalPlatformSpec,
@@ -72,7 +77,9 @@ namespace vcpkg
         return ret;
     }
 
-    ExpectedS<FullPackageSpec> ParsedQualifiedSpecifier::to_full_spec(Triplet default_triplet, ImplicitDefault id) const
+    ExpectedS<FullPackageSpec> ParsedQualifiedSpecifier::to_full_spec(Triplet default_triplet,
+                                                                      Optional<bin2sth::CompileTriplet> ct,
+                                                                      ImplicitDefault id) const
     {
         if (platform)
         {
@@ -81,10 +88,11 @@ namespace vcpkg
 
         const Triplet t = triplet ? Triplet::from_canonical_name(*triplet.get()) : default_triplet;
         const View<std::string> fs = !features.get() ? View<std::string>{} : *features.get();
-        return FullPackageSpec{{name, t}, normalize_feature_list(fs, id)};
+        return FullPackageSpec{{name, t, ct}, normalize_feature_list(fs, id)};
     }
 
-    ExpectedS<PackageSpec> ParsedQualifiedSpecifier::to_package_spec(Triplet default_triplet) const
+    ExpectedS<PackageSpec> ParsedQualifiedSpecifier::to_package_spec(Triplet default_triplet,
+                                                                     Optional<bin2sth::CompileTriplet> ct) const
     {
         if (platform)
         {
@@ -96,7 +104,7 @@ namespace vcpkg
         }
 
         const Triplet t = triplet ? Triplet::from_canonical_name(*triplet.get()) : default_triplet;
-        return PackageSpec{name, t};
+        return PackageSpec{name, t, ct};
     }
 
     static bool is_package_name_char(char32_t ch)
@@ -110,6 +118,12 @@ namespace vcpkg
         // (libwebp[vwebp_sdl]).
         // TODO: we need to rename this feature, then remove underscores from this list.
         return is_package_name_char(ch) || ch == '_';
+    }
+
+    static bool is_compile_triplet_char(char32_t ch)
+    {
+        // example: clang-9.0.1_O1_O2
+        return Parse::ParserBase::is_alphanumdash(ch) || ch == '_' || ch == '.';
     }
 
     ExpectedS<ParsedQualifiedSpecifier> parse_qualified_specifier(StringView input)
@@ -227,6 +241,16 @@ namespace vcpkg
                 parser.add_error("expected triplet name (must be lowercase, digits, '-')");
                 return nullopt;
             }
+            if (parser.cur() == SEP_TRIPLET_COMPILE_TRIPLET[0])
+            {
+                parser.next();
+                ret.compile_triplet = parser.match_zero_or_more(is_compile_triplet_char).to_string();
+                if (ret.compile_triplet.get()->empty())
+                {
+                    parser.add_error("expected compile-triplet name (must be lowercase, digits, '-', '_')");
+                    return nullopt;
+                }
+            }
         }
         parser.skip_tabs_spaces();
         ch = parser.cur();
@@ -284,9 +308,13 @@ namespace vcpkg
         };
     }
 
-    FullPackageSpec Dependency::to_full_spec(Triplet target, Triplet host_triplet, ImplicitDefault id) const
+    FullPackageSpec Dependency::to_full_spec(Triplet target,
+                                             Triplet host_triplet,
+                                             Optional<bin2sth::CompileTriplet> compile_triplet,
+                                             ImplicitDefault id) const
     {
-        return FullPackageSpec{{name, host ? host_triplet : target}, normalize_feature_list(features, id)};
+        return FullPackageSpec{{name, host ? host_triplet : target, host ? compile_triplet : nullopt},
+                               normalize_feature_list(features, id)};
     }
 
     bool operator==(const Dependency& lhs, const Dependency& rhs)

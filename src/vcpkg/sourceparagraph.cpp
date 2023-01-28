@@ -1506,6 +1506,7 @@ namespace vcpkg
                                                      Triplet target,
                                                      Triplet host,
                                                      const std::unordered_map<std::string, std::string>& cmake_vars,
+                                                     Optional<bin2sth::CompileTriplet> compile_triplet,
                                                      ImplicitDefault id)
     {
         std::vector<FullPackageSpec> ret;
@@ -1513,7 +1514,7 @@ namespace vcpkg
         {
             if (dep.platform.evaluate(cmake_vars))
             {
-                ret.emplace_back(dep.to_full_spec(target, host, id));
+                ret.emplace_back(dep.to_full_spec(target, host, compile_triplet, id));
             }
         }
         return ret;

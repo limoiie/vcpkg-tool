@@ -34,8 +34,7 @@ namespace vcpkg
         InstalledPackageView ipv;
         for (auto&& p : *this)
         {
-            if (p->package.spec.name() == spec.name() && p->package.spec.triplet() == spec.triplet() &&
-                p->is_installed())
+            if (p->package.spec == spec && p->is_installed())
             {
                 if (p->package.is_feature())
                 {
@@ -56,31 +55,35 @@ namespace vcpkg
 
     StatusParagraphs::iterator StatusParagraphs::find(const std::string& name,
                                                       Triplet triplet,
+                                                      const Optional<bin2sth::CompileTriplet>& compile_triplet,
                                                       const std::string& feature)
     {
         if (feature == "core")
         {
             // The core feature maps to .feature is empty
-            return find(name, triplet, {});
+            return find(name, triplet, compile_triplet, "");
         }
         return std::find_if(begin(), end(), [&](const std::unique_ptr<StatusParagraph>& pgh) {
             const PackageSpec& spec = pgh->package.spec;
-            return spec.name() == name && spec.triplet() == triplet && pgh->package.feature == feature;
+            return spec.name() == name && spec.triplet() == triplet && spec.compile_triplet() == compile_triplet &&
+                   pgh->package.feature == feature;
         });
     }
 
     StatusParagraphs::const_iterator StatusParagraphs::find(const std::string& name,
                                                             Triplet triplet,
+                                                            const Optional<bin2sth::CompileTriplet>& compile_triplet,
                                                             const std::string& feature) const
     {
         if (feature == "core")
         {
             // The core feature maps to .feature == ""
-            return find(name, triplet, "");
+            return find(name, triplet, compile_triplet, "");
         }
         return std::find_if(begin(), end(), [&](const std::unique_ptr<StatusParagraph>& pgh) {
             const PackageSpec& spec = pgh->package.spec;
-            return spec.name() == name && spec.triplet() == triplet && pgh->package.feature == feature;
+            return spec.name() == name && spec.triplet() == triplet && spec.compile_triplet() == compile_triplet &&
+                   pgh->package.feature == feature;
         });
     }
 
@@ -126,7 +129,7 @@ namespace vcpkg
     {
         Checks::check_exit(VCPKG_LINE_INFO, pgh != nullptr, "Inserted null paragraph");
         const PackageSpec& spec = pgh->package.spec;
-        const auto ptr = find(spec.name(), spec.triplet(), pgh->package.feature);
+        const auto ptr = find(spec.name(), spec.triplet(), spec.compile_triplet(), pgh->package.feature);
         if (ptr == end())
         {
             paragraphs.push_back(std::move(pgh));
