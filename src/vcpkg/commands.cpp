@@ -27,6 +27,7 @@
 #include <vcpkg/commands.owns.h>
 #include <vcpkg/commands.porthistory.h>
 #include <vcpkg/commands.portsdiff.h>
+#include <vcpkg/commands.register-compiler.h>
 #include <vcpkg/commands.search.h>
 #include <vcpkg/commands.setinstalled.h>
 #include <vcpkg/commands.upgrade.h>
@@ -73,6 +74,7 @@ namespace vcpkg::Commands
         static const Search::SearchCommand search{};
         static const List::ListCommand list{};
         static const ListCompilers::ListCompilersCommand list_compilers{};
+        static const RegisterCompiler::RegisterCompilerCommand register_compiler{};
         static const Info::InfoCommand info{};
         static const Integrate::IntegrateCommand integrate{};
         static const Owns::OwnsCommand owns{};
@@ -97,6 +99,7 @@ namespace vcpkg::Commands
             {"search", &search},
             {"list", &list},
             {"list-compilers", &list_compilers},
+            {"register-compiler", &register_compiler},
             {"integrate", &integrate},
             {"owns", &owns},
             {"update", &update},
