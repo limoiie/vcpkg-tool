@@ -38,10 +38,10 @@ namespace vcpkg
 
     std::string PackageSpec::qualifier() const
     {
-        std::string qualifier = this->triplet().to_string();
+        std::string qualifier = this->triplet().canonical_name();
         if (auto const p_compile_triplet = this->m_compile_triplet.get())
         {
-            qualifier.append(SEP_TRIPLET_COMPILE_TRIPLET).append(p_compile_triplet->to_string());
+            qualifier.append(SEP_TRIPLET_COMPILE_TRIPLET).append(p_compile_triplet->canonical_name());
         }
         return qualifier;
     }

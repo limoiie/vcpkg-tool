@@ -32,10 +32,12 @@ namespace vcpkg::Install
 
     using file_pack = std::pair<std::string, std::string>;
 
-    InstallDir InstallDir::from_destination_root(const InstalledPaths& ip, Triplet t, const BinaryParagraph& pgh)
+    InstallDir InstallDir::from_destination_root(const InstalledPaths& ip,
+                                                 const PackageSpec& p,
+                                                 const BinaryParagraph& pgh)
     {
         InstallDir dirs;
-        dirs.m_destination = ip.triplet_dir(t);
+        dirs.m_destination = ip.triplet_dir(p);
         dirs.m_listfile = ip.listfile_path(pgh);
         return dirs;
     }
@@ -237,7 +239,7 @@ namespace vcpkg::Install
 
         if (!intersection.empty())
         {
-            const auto triplet_install_path = installed.triplet_dir(triplet);
+            const auto triplet_install_path = installed.triplet_dir(bcf.core_paragraph.spec);
             vcpkg::printf(Color::error,
                           "The following files are already installed in %s and are in conflict with %s\n\n",
                           triplet_install_path.generic_u8string(),
@@ -282,7 +284,7 @@ namespace vcpkg::Install
         }
 
         const InstallDir install_dir =
-            InstallDir::from_destination_root(paths.installed(), triplet, bcf.core_paragraph);
+            InstallDir::from_destination_root(paths.installed(), bcf.core_paragraph.spec, bcf.core_paragraph);
 
         install_package_and_write_listfile(fs, paths.package_dir(bcf.core_paragraph.spec), install_dir);
 

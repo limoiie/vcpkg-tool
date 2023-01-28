@@ -48,7 +48,9 @@ namespace vcpkg::Install
 
     struct InstallDir
     {
-        static InstallDir from_destination_root(const InstalledPaths& ip, Triplet t, const BinaryParagraph& pgh);
+        static InstallDir from_destination_root(const InstalledPaths& ip,
+                                                const PackageSpec& p,
+                                                const BinaryParagraph& pgh);
 
     private:
         Path m_destination;

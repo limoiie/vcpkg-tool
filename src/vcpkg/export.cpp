@@ -547,7 +547,7 @@ namespace vcpkg::Export
                 const BinaryParagraph& binary_paragraph = action.core_paragraph().value_or_exit(VCPKG_LINE_INFO);
 
                 const InstallDir dirs =
-                    InstallDir::from_destination_root(export_paths, action.spec.triplet(), binary_paragraph);
+                    InstallDir::from_destination_root(export_paths, action.spec, binary_paragraph);
 
                 auto lines = fs.read_lines(paths.installed().listfile_path(binary_paragraph), VCPKG_LINE_INFO);
                 std::vector<Path> files;
@@ -560,7 +560,7 @@ namespace vcpkg::Export
                 }
 
                 Install::install_files_and_write_listfile(
-                    fs, paths.installed().triplet_dir(action.spec.triplet()), files, dirs);
+                    fs, paths.installed().triplet_dir(action.spec), files, dirs);
             }
         }
 
