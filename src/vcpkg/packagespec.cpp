@@ -19,7 +19,7 @@ namespace vcpkg
     void FeatureSpec::to_string(std::string& out) const
     {
         if (feature().empty()) return spec().to_string(out);
-        Strings::append(out, port(), '[', feature(), "]:", triplet());
+        Strings::append(out, port(), '[', feature(), "]:", spec().qualifier());
     }
 
     void FullPackageSpec::expand_fspecs_to(std::vector<FeatureSpec>& out) const
@@ -36,10 +36,20 @@ namespace vcpkg
 
     Triplet PackageSpec::triplet() const { return this->m_triplet; }
 
-    std::string PackageSpec::dir() const { return Strings::format("%s_%s", this->m_name, this->m_triplet); }
+    std::string PackageSpec::qualifier() const
+    {
+        std::string qualifier = this->triplet().to_string();
+        if (auto const p_compile_triplet = this->m_compile_triplet.get())
+        {
+            qualifier.append(SEP_TRIPLET_COMPILE_TRIPLET).append(p_compile_triplet->to_string());
+        }
+        return qualifier;
+    }
 
-    std::string PackageSpec::to_string() const { return Strings::format("%s:%s", this->name(), this->triplet()); }
-    void PackageSpec::to_string(std::string& s) const { Strings::append(s, this->name(), ':', this->triplet()); }
+    std::string PackageSpec::dir() const { return Strings::format("%s_%s", this->m_name, this->qualifier()); }
+
+    std::string PackageSpec::to_string() const { return Strings::format("%s:%s", this->name(), this->qualifier()); }
+    void PackageSpec::to_string(std::string& s) const { Strings::append(s, this->name(), ':', this->qualifier()); }
 
     bool operator==(const PackageSpec& left, const PackageSpec& right)
     {
@@ -286,6 +296,19 @@ namespace vcpkg
         // there isn't a qualifier.
         parser.skip_tabs_spaces();
         return ret;
+    }
+
+    Optional<std::pair<Triplet, Optional<bin2sth::CompileTriplet>>> deserialize_qualifier(
+        const ParsedQualifiedSpecifier& p)
+    {
+        if (!p.triplet.has_value()) return nullopt;
+
+        auto triplet = Triplet::from_canonical_name(std::string(*p.triplet.get()));
+        auto compile_triplet =
+            (p.compile_triplet && !p.compile_triplet.get()->empty())
+                ? bin2sth::CompileTriplet::from_canonical_name(std::string(*p.compile_triplet.get()), triplet)
+                : nullopt;
+        return std::make_pair(std::move(triplet), std::move(compile_triplet));
     }
 
     bool operator==(const DependencyConstraint& lhs, const DependencyConstraint& rhs)

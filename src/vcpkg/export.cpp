@@ -555,7 +555,7 @@ namespace vcpkg::Export
                 {
                     if (suffix.empty()) continue;
                     if (suffix.back() == '/') suffix.pop_back();
-                    if (suffix == action.spec.triplet().to_string()) continue;
+                    if (suffix == action.spec.qualifier()) continue;
                     files.push_back(paths.installed().root() / suffix);
                 }
 
