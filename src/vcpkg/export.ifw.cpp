@@ -438,7 +438,7 @@ namespace vcpkg::Export::IFW
 
             // Copy package data
             const InstallDir dirs =
-                InstallDir::from_destination_root(installed, action.spec.triplet(), binary_paragraph);
+                InstallDir::from_destination_root(installed, action.spec, binary_paragraph);
 
             Install::install_package_and_write_listfile(fs, paths.package_dir(action.spec), dirs);
         }
