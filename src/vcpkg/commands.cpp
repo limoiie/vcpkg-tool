@@ -25,6 +25,7 @@
 #include <vcpkg/commands.info.h>
 #include <vcpkg/commands.init-registry.h>
 #include <vcpkg/commands.integrate.h>
+#include <vcpkg/commands.list-compilers.h>
 #include <vcpkg/commands.list.h>
 #include <vcpkg/commands.new.h>
 #include <vcpkg/commands.owns.h>
@@ -96,6 +97,7 @@ namespace vcpkg::Commands
         static const Info::InfoCommand info{};
         static const Integrate::IntegrateCommand integrate{};
         static const List::ListCommand list{};
+        static const ListCompilers::ListCompilersCommand list_compilers{};
         static const NewCommand new_{};
         static const Owns::OwnsCommand owns{};
         static const PortHistory::PortHistoryCommand porthistory{};
@@ -121,6 +123,8 @@ namespace vcpkg::Commands
             {"format-manifest", &format_manifest},
             {"integrate", &integrate},
             {"list", &list},
+            {"list-compilers", &list_compilers},
+            {"integrate", &integrate},
             {"new", &new_},
             {"owns", &owns},
             {"portsdiff", &portsdiff},
