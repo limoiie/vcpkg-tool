@@ -759,11 +759,8 @@ namespace vcpkg::Build
             variables.push_back({"ARIA2", paths.get_tool_exe(Tools::ARIA2)});
         }
 
-        if (args.bin2sth_compile_triplet)
+        if (auto const* p_compile_triplet = action.spec.compile_triplet().get())
         {
-            auto const compile_triplet =
-                bin2sth::CompileTriplet::from_canonical_name(*args.bin2sth_compile_triplet, action.spec.triplet());
-            auto p_compile_triplet = compile_triplet.get();
             auto const flags = paths.get_compilation_flags_factory().interpret(*p_compile_triplet);
             // HACK: in bin2sth mode, we only build release type, whose flags will be overwritten in corresponding
             //  toolchain cmake files. To be more concrete, the 'release' build-type is actually configured as debug

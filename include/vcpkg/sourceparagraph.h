@@ -20,7 +20,8 @@ namespace vcpkg
     std::vector<FullPackageSpec> filter_dependencies(const std::vector<Dependency>& deps,
                                                      Triplet t,
                                                      Triplet host,
-                                                     const std::unordered_map<std::string, std::string>& cmake_vars);
+                                                     const std::unordered_map<std::string, std::string>& cmake_vars,
+                                                     Optional<bin2sth::CompileTriplet> compile_triplet);
 
     struct Type
     {

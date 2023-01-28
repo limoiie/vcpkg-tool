@@ -7,6 +7,8 @@
 
 namespace vcpkg
 {
+    static constexpr StringLiteral SEP_TRIPLET_COMPILE_TRIPLET = "_";
+
     std::string FeatureSpec::to_string() const
     {
         std::string ret;
@@ -59,7 +61,9 @@ namespace vcpkg
         return feature_specs;
     }
 
-    ExpectedS<FullPackageSpec> FullPackageSpec::from_string(const std::string& spec_as_string, Triplet default_triplet)
+    ExpectedS<FullPackageSpec> FullPackageSpec::from_string(const std::string& spec_as_string,
+                                                            Triplet default_triplet,
+                                                            Optional<bin2sth::CompileTriplet> default_compile_triplet)
     {
         return parse_qualified_specifier(spec_as_string)
             .then([&](ParsedQualifiedSpecifier&& p) -> ExpectedS<FullPackageSpec> {
@@ -70,14 +74,18 @@ namespace vcpkg
             });
     }
 
-    std::vector<PackageSpec> PackageSpec::to_package_specs(const std::vector<std::string>& ports, Triplet triplet)
+    std::vector<PackageSpec> PackageSpec::to_package_specs(const std::vector<std::string>& ports,
+                                                           Triplet triplet,
+                                                           const Optional<bin2sth::CompileTriplet>& compile_triplet)
     {
         return Util::fmap(ports, [&](const std::string& spec_as_string) -> PackageSpec {
-            return {spec_as_string, triplet};
+            return {spec_as_string, triplet, compile_triplet};
         });
     }
 
     const std::string& PackageSpec::name() const { return this->m_name; }
+
+    Optional<bin2sth::CompileTriplet> const& PackageSpec::compile_triplet() const { return this->m_compile_triplet; }
 
     Triplet PackageSpec::triplet() const { return this->m_triplet; }
 
@@ -88,7 +96,8 @@ namespace vcpkg
 
     bool operator==(const PackageSpec& left, const PackageSpec& right)
     {
-        return left.name() == right.name() && left.triplet() == right.triplet();
+        return left.name() == right.name() && left.triplet() == right.triplet() &&
+               left.compile_triplet() == right.compile_triplet();
     }
 
     ExpectedS<Features> Features::from_string(const std::string& name)
@@ -111,6 +120,12 @@ namespace vcpkg
         // (libwebp[vwebp_sdl]).
         // TODO: we need to rename this feature, then remove underscores from this list.
         return is_package_name_char(ch) || ch == '_';
+    }
+
+    static bool is_compile_triplet_char(char32_t ch)
+    {
+        // example: clang-9.0.1_O1_O2
+        return Parse::ParserBase::is_alphanumdash(ch) || ch == '_' || ch == '.';
     }
 
     ExpectedS<ParsedQualifiedSpecifier> parse_qualified_specifier(StringView input)
@@ -221,6 +236,16 @@ namespace vcpkg
             {
                 parser.add_error("expected triplet name (must be lowercase, digits, '-')");
                 return nullopt;
+            }
+            if (parser.cur() == SEP_TRIPLET_COMPILE_TRIPLET[0])
+            {
+                parser.next();
+                ret.compile_triplet = parser.match_zero_or_more(is_compile_triplet_char).to_string();
+                if (ret.compile_triplet.get()->empty())
+                {
+                    parser.add_error("expected compile-triplet name (must be lowercase, digits, '-', '_')");
+                    return nullopt;
+                }
             }
         }
         parser.skip_tabs_spaces();

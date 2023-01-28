@@ -124,7 +124,8 @@ namespace vcpkg::Dependencies
                 if (auto vars = maybe_vars.get())
                 {
                     // Qualified dependency resolution is available
-                    auto fullspec_list = filter_dependencies(*qualified_deps, m_spec.triplet(), host_triplet, *vars);
+                    auto fullspec_list = filter_dependencies(
+                        *qualified_deps, m_spec.triplet(), host_triplet, *vars, m_spec.compile_triplet());
 
                     for (auto&& fspec : fullspec_list)
                     {
@@ -142,8 +143,9 @@ namespace vcpkg::Dependencies
                         if (dep.platform.is_empty())
                         {
                             auto t = dep.host ? host_triplet : m_spec.triplet();
+                            auto ct = dep.host ? nullopt : m_spec.compile_triplet();
                             Util::Vectors::append(&dep_list,
-                                                  FullPackageSpec({dep.name, t}, dep.features)
+                                                  FullPackageSpec({dep.name, t, ct}, dep.features)
                                                       .to_feature_specs({"default"}, {"default"}));
                         }
                         else
@@ -471,6 +473,10 @@ namespace vcpkg::Dependencies
         }
 
         const std::string features = Strings::join(",", feature_list);
+        if (auto* pct = this->spec.compile_triplet().get())
+        {
+            return Strings::format("%s[%s]:%s_%s", this->spec.name(), features, this->spec.triplet(), pct->to_string());
+        }
         return Strings::format("%s[%s]:%s", this->spec.name(), features, this->spec.triplet());
     }
     const std::string& InstallPlanAction::public_abi() const
@@ -684,7 +690,7 @@ namespace vcpkg::Dependencies
                                                            std::vector<std::string> features,
                                                            CMakeVars::CMakeVarProvider& var_provider)
     {
-        PackageSpec spec{scf.core_paragraph->name, triplet};
+        PackageSpec spec{scf.core_paragraph->name, triplet, nullopt};
         std::map<PackageSpec, std::vector<std::string>> specs_to_features;
 
         Optional<const PlatformExpression::Context&> ctx_storage = var_provider.get_dep_info_vars(spec);
@@ -707,7 +713,7 @@ namespace vcpkg::Dependencies
                     else
                     {
                         auto t = dep.host ? host_triplet : triplet;
-                        Util::Vectors::append(&specs_to_features[{dep.name, t}], dep.features);
+                        Util::Vectors::append(&specs_to_features[{dep.name, t, nullopt}], dep.features);
                     }
                 }
             }
@@ -1526,7 +1532,9 @@ namespace vcpkg::Dependencies
 
             for (auto&& dep : *deps.get())
             {
-                PackageSpec dep_spec(dep.name, dep.host ? m_host_triplet : ref.first.triplet());
+                PackageSpec dep_spec(dep.name,
+                                     dep.host ? m_host_triplet : ref.first.triplet(),
+                                     dep.host ? nullopt : ref.first.compile_triplet());
 
                 if (!dep.platform.is_empty())
                 {
@@ -1757,7 +1765,9 @@ namespace vcpkg::Dependencies
         void VersionedPackageGraph::add_roots(View<Dependency> deps, const PackageSpec& toplevel)
         {
             auto dep_to_spec = [&toplevel, this](const Dependency& d) {
-                return PackageSpec{d.name, d.host ? m_host_triplet : toplevel.triplet()};
+                return PackageSpec{d.name,
+                                   d.host ? m_host_triplet : toplevel.triplet(),
+                                   d.host ? nullopt : toplevel.compile_triplet()};
             };
             auto specs = Util::fmap(deps, dep_to_spec);
 
@@ -2031,7 +2041,9 @@ namespace vcpkg::Dependencies
                         {
                             for (auto&& dep : *maybe_deps)
                             {
-                                PackageSpec dep_spec(dep.name, dep.host ? m_host_triplet : spec.triplet());
+                                PackageSpec dep_spec(dep.name,
+                                                     dep.host ? m_host_triplet : spec.triplet(),
+                                                     dep.host ? nullopt : spec.compile_triplet());
                                 if (dep_spec == spec) continue;
 
                                 if (!dep.platform.is_empty() &&

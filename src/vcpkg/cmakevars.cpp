@@ -48,7 +48,8 @@ namespace vcpkg::CMakeVars
             TripletCMakeVarProvider(const TripletCMakeVarProvider&) = delete;
             TripletCMakeVarProvider& operator=(const TripletCMakeVarProvider&) = delete;
 
-            void load_generic_triplet_vars(Triplet triplet) const override;
+            void load_generic_triplet_vars(Triplet triplet,
+                                           Optional<bin2sth::CompileTriplet> compile_triplet) const override;
 
             void load_dep_info_vars(View<PackageSpec> specs, Triplet host_triplet) const override;
 
@@ -296,11 +297,12 @@ endfunction()
         }
     }
 
-    void TripletCMakeVarProvider::load_generic_triplet_vars(Triplet triplet) const
+    void TripletCMakeVarProvider::load_generic_triplet_vars(Triplet triplet,
+                                                            Optional<bin2sth::CompileTriplet> compile_triplet) const
     {
         std::vector<std::vector<std::pair<std::string, std::string>>> vars(1);
         // Hack: PackageSpecs should never have .name==""
-        FullPackageSpec full_spec({"", triplet});
+        FullPackageSpec full_spec({"", triplet,  compile_triplet});
         const auto file_path = create_tag_extraction_file(std::array<std::pair<const FullPackageSpec*, std::string>, 1>{
             std::pair<const FullPackageSpec*, std::string>{&full_spec, ""}});
         launch_and_split(file_path, vars);
