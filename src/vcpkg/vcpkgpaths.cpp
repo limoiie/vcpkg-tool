@@ -324,14 +324,14 @@ namespace vcpkg
 
         if (manifest_root_dir.empty())
         {
-            installed =
+            m_installed =
                 process_output_directory(filesystem, root, args.install_root_dir.get(), "installed", VCPKG_LINE_INFO);
         }
         else
         {
             Debug::print("Using manifest-root: ", manifest_root_dir, '\n');
 
-            installed = process_output_directory(
+            m_installed = process_output_directory(
                 filesystem, manifest_root_dir, args.install_root_dir.get(), "vcpkg_installed", VCPKG_LINE_INFO);
 
             const auto vcpkg_lock = root / ".vcpkg-root";
@@ -420,7 +420,7 @@ namespace vcpkg
         buildsystems_msbuild_targets = msbuildDirectory / "vcpkg.targets";
         buildsystems_msbuild_props = msbuildDirectory / "vcpkg.props";
 
-        vcpkg_dir = installed / "vcpkg";
+        vcpkg_dir = m_installed / "vcpkg";
         vcpkg_dir_status_file = vcpkg_dir / "status";
         vcpkg_dir_info = vcpkg_dir / "info";
         vcpkg_dir_updates = vcpkg_dir / "updates";
@@ -460,6 +460,17 @@ namespace vcpkg
     Path VcpkgPaths::listfile_path(const BinaryParagraph& pgh) const
     {
         return this->vcpkg_dir_info / (pgh.fullstem() + ".list");
+    }
+
+    Path VcpkgPaths::installed_dir(const PackageSpec& spec) const
+    {
+        return this->installed_root() / spec.qualifier();
+    }
+
+    Path VcpkgPaths::installed_dir(const Optional<bin2sth::CompileTriplet>& compile_triplet,
+                                   const Triplet& triplet) const
+    {
+        return this->installed_dir(PackageSpec("", triplet, compile_triplet));
     }
 
     bool VcpkgPaths::is_valid_triplet(Triplet t) const

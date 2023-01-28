@@ -806,8 +806,8 @@ namespace vcpkg::Build
         std::vector<std::string> port_configs;
         for (const PackageSpec& dependency : action.package_dependencies)
         {
-            const Path port_config_path = paths.installed / dependency.triplet().canonical_name() / "share" /
-                                          dependency.name() / "vcpkg-port-config.cmake";
+            const Path port_config_path =
+                paths.installed_dir(dependency) / "share" / dependency.name() / "vcpkg-port-config.cmake";
 
             if (fs.is_regular_file(port_config_path))
             {

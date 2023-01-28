@@ -60,13 +60,14 @@ namespace vcpkg::Commands::Env
         const bool add_tools = Util::Sets::contains(options.switches, OPTION_TOOLS);
         const bool add_python = Util::Sets::contains(options.switches, OPTION_PYTHON);
 
+        const auto installed = paths.installed_dir(compile_triplet, triplet);
         std::vector<std::string> path_vars;
-        if (add_bin) path_vars.push_back((paths.installed / triplet.to_string() / "bin").native());
-        if (add_debug_bin) path_vars.push_back((paths.installed / triplet.to_string() / "debug" / "bin").native());
-        if (add_include) extra_env.emplace("INCLUDE", (paths.installed / triplet.to_string() / "include").native());
+        if (add_bin) path_vars.push_back((installed / "bin").native());
+        if (add_debug_bin) path_vars.push_back((installed / "debug" / "bin").native());
+        if (add_include) extra_env.emplace("INCLUDE", (installed / "include").native());
         if (add_tools)
         {
-            auto tools_dir = paths.installed / triplet.to_string() / "tools";
+            auto tools_dir = installed / "tools";
             path_vars.push_back(tools_dir.native());
             for (auto&& tool_dir : fs.get_directories_non_recursive(tools_dir, VCPKG_LINE_INFO))
             {
@@ -75,7 +76,7 @@ namespace vcpkg::Commands::Env
         }
         if (add_python)
         {
-            extra_env.emplace("PYTHONPATH", (paths.installed / triplet.to_string() / "python").native());
+            extra_env.emplace("PYTHONPATH", (installed / "python").native());
         }
 
         if (path_vars.size() > 0) extra_env.emplace("PATH", Strings::join(";", path_vars));
